@@ -4,10 +4,10 @@ import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
 const ToastContext = createContext(null);
 
 const styles = {
-  success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  error: "border-red-200 bg-red-50 text-red-800",
-  warning: "border-amber-200 bg-amber-50 text-amber-800",
-  info: "border-cyan-200 bg-cyan-50 text-cyan-800"
+  success: "border-emerald-400/25 bg-emerald-950/95 text-emerald-100",
+  error: "border-rose-400/25 bg-rose-950/95 text-rose-100",
+  warning: "border-amber-400/25 bg-amber-950/95 text-amber-100",
+  info: "border-cyan-400/25 bg-cyan-950/95 text-cyan-100"
 };
 
 const icons = {
@@ -37,7 +37,7 @@ export const ToastProvider = ({ children }) => {
         {toasts.map((toast) => {
           const Icon = icons[toast.type] || Info;
           return (
-            <div key={toast.id} className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-sm font-semibold shadow-lg transition ${styles[toast.type] || styles.info}`}>
+            <div key={toast.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur transition ${styles[toast.type] || styles.info}`}>
               <Icon size={18} className="mt-0.5 shrink-0" />
               <span>{toast.message}</span>
             </div>

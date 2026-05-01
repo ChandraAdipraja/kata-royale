@@ -13,9 +13,9 @@ export default function Result() {
   if (!result) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-10">
-        <section className="panel rounded-lg p-8 text-center">
-          <h1 className="text-2xl font-black">Result belum tersedia</h1>
-          <p className="mt-2 text-ink/60">Match mungkin belum selesai atau session result sudah hilang.</p>
+        <section className="panel rounded-2xl p-8 text-center">
+          <h1 className="text-2xl font-black text-white">Result belum tersedia</h1>
+          <p className="mt-2 text-slate-400">Match mungkin belum selesai atau session result sudah hilang.</p>
           <Link to="/dashboard"><Button className="mt-5">Back to Dashboard</Button></Link>
         </section>
       </main>
@@ -26,11 +26,11 @@ export default function Result() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <section className="panel rounded-lg p-6 text-center">
-        <Crown className="mx-auto text-gold" size={54} fill="currentColor" />
-        <p className="mt-2 text-sm font-black uppercase text-ink/45">Winner</p>
-        <h1 className="text-4xl font-black">{result.winner?.username}</h1>
-        <p className="mt-3 text-sm font-semibold text-ink/60">
+      <section className="panel rounded-2xl p-6 text-center">
+        <Crown className="mx-auto text-gold drop-shadow-[0_0_24px_rgba(244,183,64,0.45)]" size={64} fill="currentColor" />
+        <p className="mt-2 text-sm font-black uppercase tracking-widest text-slate-500">Winner</p>
+        <h1 className="mt-2 text-5xl font-black text-white">{result.winner?.username}</h1>
+        <p className="mt-3 text-sm font-semibold text-slate-400">
           {user ? "Statistik akunmu sudah disimpan." : "Login untuk menyimpan statistik permainanmu."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -46,30 +46,30 @@ export default function Result() {
       </section>
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="panel rounded-lg p-5">
-          <h2 className="flex items-center gap-2 text-xl font-black"><Trophy size={20} /> Final Standings</h2>
+        <div className="panel rounded-2xl p-5">
+          <h2 className="flex items-center gap-2 text-xl font-black text-white"><Trophy size={20} className="text-yellow-400" /> Final Standings</h2>
           <div className="mt-4 space-y-3">
             {standings.map((player, index) => (
-              <div key={player.userId || player.guestId || player.socketId} className="flex items-center justify-between rounded-lg border border-ink/10 bg-white p-3">
+              <div key={player.userId || player.guestId || player.socketId} className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/70 p-3">
                 <div>
-                  <div className="font-black">#{index + 1} {player.username}</div>
-                  <div className="text-xs font-bold uppercase text-ink/45">{player.isGuest ? "Guest" : "User"}</div>
+                  <div className="font-black text-white">#{index + 1} {player.username}</div>
+                  <div className="text-xs font-bold uppercase text-slate-500">{player.isGuest ? "Guest" : "User"}</div>
                 </div>
-                <span className="rounded-lg bg-ink/5 px-3 py-1 text-sm font-black">{player.hp} HP</span>
+                <span className="rounded-lg bg-white/10 px-3 py-1 text-sm font-black text-rose-300">{player.hp} HP</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="panel rounded-lg p-5">
-          <h2 className="text-xl font-black">Word Chain</h2>
-          <div className="mt-4 text-sm font-bold leading-9 text-ink/75">
+        <div className="panel rounded-2xl p-5">
+          <h2 className="text-xl font-black text-white">Word Chain</h2>
+          <div className="mt-4 text-sm font-bold leading-9 text-slate-300">
             {result.wordsUsed.length ? result.wordsUsed.map((word, index) => (
               <span key={`${word}_${index}`}>
-                <span className="rounded-lg bg-white px-3 py-2 shadow-sm">{word}</span>
-                {index < result.wordsUsed.length - 1 && <span className="mx-2 text-mint">→</span>}
+                <span className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 shadow-sm">{word}</span>
+                {index < result.wordsUsed.length - 1 && <span className="mx-2 text-yellow-400">-&gt;</span>}
               </span>
-            )) : <p className="text-ink/50">Tidak ada kata valid.</p>}
+            )) : <p className="text-slate-500">Tidak ada kata valid.</p>}
           </div>
         </div>
       </section>

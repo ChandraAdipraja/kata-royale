@@ -69,9 +69,9 @@ export default function WaitingRoom() {
   if (!lobby) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-10">
-        <section className="panel rounded-lg p-8 text-center">
-          <h1 className="text-2xl font-black">{joining ? "Masuk ke waiting room..." : "Lobby tidak tersedia"}</h1>
-          <p className="mt-2 text-ink/60">Pastikan room code benar dan game belum selesai.</p>
+        <section className="panel rounded-2xl p-8 text-center">
+          <h1 className="text-2xl font-black text-white">{joining ? "Masuk ke waiting room..." : "Lobby tidak tersedia"}</h1>
+          <p className="mt-2 text-slate-400">Pastikan room code benar dan game belum selesai.</p>
         </section>
       </main>
     );
@@ -79,14 +79,14 @@ export default function WaitingRoom() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <section className="panel rounded-lg p-6">
+      <section className="panel rounded-2xl border-t-4 border-t-yellow-400 p-6">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <KbbiBadge />
-            <h1 className="mt-4 text-3xl font-black">{lobby.name}</h1>
-            <p className="mt-2 flex items-center gap-2 text-sm font-bold text-ink/60"><Crown size={16} /> Host: {host?.username || "-"}</p>
+            <h1 className="mt-4 text-3xl font-black text-white">{lobby.name}</h1>
+            <p className="mt-2 flex items-center gap-2 text-sm font-bold text-slate-400"><Crown size={16} className="text-yellow-400" /> Host: {host?.username || "-"}</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="inline-flex rounded-lg bg-ink px-5 py-3 text-4xl font-black tracking-wide text-white">{lobby.roomCode}</div>
+              <div className="inline-flex rounded-2xl bg-slate-950 px-5 py-3 font-mono text-4xl font-black tracking-widest text-white shadow-inner">{lobby.roomCode}</div>
               <Button variant="secondary" onClick={copyCode}><Copy size={18} /> Copy</Button>
             </div>
           </div>
@@ -100,19 +100,19 @@ export default function WaitingRoom() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.72fr]">
           <section>
-            <h2 className="flex items-center gap-2 text-xl font-black"><UsersRound size={20} /> Player List</h2>
+            <h2 className="flex items-center gap-2 text-xl font-black text-white"><UsersRound size={20} /> Player List</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {lobby.players.map((player) => (
-                <div key={player.userId || player.guestId || player.socketId} className="rounded-lg border border-ink/10 bg-white p-4 transition hover:border-mint/50">
+                <div key={player.userId || player.guestId || player.socketId} className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 transition hover:border-yellow-400/40">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="font-black">{player.username}</div>
+                      <div className="font-black text-white">{player.username}</div>
                       <div className="mt-1 flex gap-2 text-xs font-black uppercase">
-                        <span className={player.isHost ? "text-amber-600" : "text-ink/45"}>{player.isHost ? "Host" : "Player"}</span>
-                        {player.socketId === socket?.id && <span className="text-cyan-700">You</span>}
+                        <span className={player.isHost ? "text-yellow-300" : "text-slate-500"}>{player.isHost ? "Host" : "Player"}</span>
+                        {player.socketId === socket?.id && <span className="text-cyan-300">You</span>}
                       </div>
                     </div>
-                    <span className={`rounded-lg px-3 py-1 text-sm font-black ${player.ready || player.isHost ? "bg-emerald-50 text-emerald-700" : "bg-ink/5 text-ink/50"}`}>
+                    <span className={`rounded-lg px-3 py-1 text-sm font-black ${player.ready || player.isHost ? "bg-emerald-400/10 text-emerald-300" : "bg-white/10 text-slate-400"}`}>
                       {player.ready || player.isHost ? "Ready" : "Waiting"}
                     </span>
                   </div>
@@ -121,9 +121,9 @@ export default function WaitingRoom() {
             </div>
           </section>
 
-          <aside className="rounded-lg border border-ink/10 bg-white p-5">
-            <h2 className="flex items-center gap-2 text-xl font-black"><Timer size={20} /> Start Check</h2>
-            <div className="mt-4 space-y-3 text-sm font-semibold text-ink/65">
+          <aside className="rounded-2xl border border-slate-700 bg-slate-950/60 p-5">
+            <h2 className="flex items-center gap-2 text-xl font-black text-white"><Timer size={20} /> Start Check</h2>
+            <div className="mt-4 space-y-3 text-sm font-semibold text-slate-400">
               <Check ok={enoughPlayers} text="Minimal 2 pemain" />
               <Check ok={everyoneReady} text="Semua player ready" />
               <Check ok={Boolean(me?.isHost)} text={me?.isHost ? "Kamu host" : "Menunggu host"} />
@@ -149,15 +149,15 @@ export default function WaitingRoom() {
 }
 
 const Setting = ({ label, value }) => (
-  <div className="rounded-lg border border-ink/10 bg-white p-4 text-center">
-    <div className="text-xs font-black uppercase text-ink/45">{label}</div>
-    <div className="mt-2 text-2xl font-black">{value}</div>
+  <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-center">
+    <div className="text-xs font-black uppercase text-slate-500">{label}</div>
+    <div className="mt-2 text-2xl font-black text-white">{value}</div>
   </div>
 );
 
 const Check = ({ ok, text }) => (
   <div className="flex items-center gap-2">
-    <span className={`h-2.5 w-2.5 rounded-full ${ok ? "bg-mint" : "bg-amber-400"}`} />
+    <span className={`h-2.5 w-2.5 rounded-full ${ok ? "bg-emerald-400" : "bg-amber-400"}`} />
     {text}
   </div>
 );

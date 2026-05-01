@@ -32,22 +32,22 @@ export default function CreateLobby() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <form onSubmit={submit} className="panel rounded-lg p-6">
+      <form onSubmit={submit} className="panel rounded-2xl p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div>
             <KbbiBadge />
-            <h1 className="mt-4 text-3xl font-black">Create Lobby</h1>
-            <p className="mt-2 text-ink/65">Atur room classic dan bagikan room code ke pemain lain.</p>
+            <h1 className="mt-4 text-3xl font-black text-white">Create Lobby</h1>
+            <p className="mt-2 text-slate-400">Atur room classic dan bagikan room code ke pemain lain.</p>
           </div>
-          <div className="rounded-lg bg-cyan-50 px-4 py-3 text-sm font-black text-cyan-800">
+          <div className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-black text-cyan-200">
             {form.isPublic ? <Unlock size={16} className="inline" /> : <Lock size={16} className="inline" />} {form.isPublic ? "Public" : "Private"}
           </div>
         </div>
 
         {!user && !guestName && (
           <div className="mt-6">
-            <label className="text-sm font-black text-ink/70">Nama guest</label>
-            <input className="mt-2 w-full rounded-lg border border-ink/15 px-3 py-3 outline-none focus:border-mint" value={guestInput} onChange={(event) => setGuestInput(event.target.value)} placeholder="Guest_1234" />
+            <label className="text-sm font-black text-slate-300">Nama guest</label>
+            <input className="game-input mt-2 px-4 py-3" value={guestInput} onChange={(event) => setGuestInput(event.target.value)} placeholder="Guest_1234" />
           </div>
         )}
 
@@ -58,7 +58,7 @@ export default function CreateLobby() {
           <Field label="Timer detik" type="number" min="5" max="60" value={form.timer} onChange={(value) => setForm({ ...form, timer: value })} />
         </div>
 
-        <label className="mt-5 flex items-center gap-3 rounded-lg border border-ink/10 bg-white p-4 text-sm font-black">
+        <label className="mt-5 flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-sm font-black text-slate-200">
           <input type="checkbox" checked={form.isPublic} onChange={(event) => setForm({ ...form, isPublic: event.target.checked })} />
           Lobby public
         </label>
@@ -73,7 +73,7 @@ export default function CreateLobby() {
 
 const Field = ({ label, value, onChange, ...props }) => (
   <label className="block">
-    <span className="text-sm font-black text-ink/70">{label}</span>
-    <input className="mt-2 w-full rounded-lg border border-ink/15 px-3 py-3 outline-none focus:border-mint" value={value} onChange={(event) => onChange(event.target.value)} {...props} />
+    <span className="text-sm font-black text-slate-300">{label}</span>
+    <input className="game-input mt-2 px-4 py-3" value={value} onChange={(event) => onChange(event.target.value)} {...props} />
   </label>
 );

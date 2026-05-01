@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { UserPlus } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -27,14 +27,23 @@ export default function Register() {
   };
 
   return (
-    <main className="mx-auto max-w-md px-4 py-10">
-      <form onSubmit={submit} className="panel space-y-4 rounded-lg p-6">
-        <h1 className="text-2xl font-black">Register</h1>
-        <input className="w-full rounded-lg border border-ink/15 px-3 py-3 outline-none focus:border-mint" placeholder="Username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
-        <input className="w-full rounded-lg border border-ink/15 px-3 py-3 outline-none focus:border-mint" placeholder="Email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
-        <input className="w-full rounded-lg border border-ink/15 px-3 py-3 outline-none focus:border-mint" placeholder="Password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
-        <Button className="w-full" disabled={loading} type="submit"><UserPlus size={18} /> {loading ? "Membuat..." : "Buat akun"}</Button>
-        <p className="text-sm text-ink/65">Sudah punya akun? <Link className="font-black text-mint" to="/login">Login</Link></p>
+    <main className="flex min-h-screen items-center justify-center py-10">
+      <form onSubmit={submit} className="panel w-full max-w-md space-y-6 rounded-2xl p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-black text-white">Daftar</h1>
+          <Link to="/" className="text-slate-400 transition hover:text-white"><X size={24} /></Link>
+        </div>
+
+        <div className="space-y-4">
+          <input className="game-input px-4 py-3" placeholder="Username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
+          <input className="game-input px-4 py-3" placeholder="Email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+          <input className="game-input px-4 py-3" placeholder="Password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+        </div>
+
+        <Button className="w-full" disabled={loading} type="submit"><UserPlus size={18} /> {loading ? "Membuat..." : "Buat Akun"}</Button>
+        <p className="text-center text-sm text-slate-400">
+          Sudah punya akun? <Link className="font-black text-yellow-400 hover:underline" to="/login">Masuk</Link>
+        </p>
       </form>
     </main>
   );

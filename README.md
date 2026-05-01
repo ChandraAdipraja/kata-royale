@@ -60,7 +60,7 @@ Folder `kv-data` sengaja tidak dicommit karena generated dan besar. Setiap devel
 npm run dev:kbbi
 ```
 
-Service KBBI repo ini berbasis Cloudflare Workers/Wrangler dan normalnya berjalan di `http://localhost:8787`.
+Service KBBI lokal berjalan di `http://localhost:8787`.
 
 Tes cepat:
 
