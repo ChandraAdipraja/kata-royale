@@ -37,21 +37,21 @@ export default function JoinLobby() {
   };
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-8">
-      <form onSubmit={submit} className="panel rounded-lg p-6">
-        <h1 className="text-3xl font-black">Join Lobby</h1>
-        <p className="mt-2 text-ink/65">Masukkan room code dari host untuk masuk waiting room.</p>
+    <main className="mx-auto flex min-h-screen max-w-xl items-center px-4 py-8">
+      <form onSubmit={submit} className="panel w-full rounded-2xl p-6">
+        <h1 className="text-3xl font-black text-white">Join Lobby</h1>
+        <p className="mt-2 text-slate-400">Masukkan room code dari host untuk masuk waiting room.</p>
 
         {!user && !guestName && (
           <label className="mt-6 block">
-            <span className="text-sm font-black text-ink/70">Nama guest</span>
-            <input className="mt-2 w-full rounded-lg border border-ink/15 px-3 py-3 outline-none focus:border-mint" value={guestInput} onChange={(event) => setGuestInput(event.target.value)} placeholder="Guest_1234" />
+            <span className="text-sm font-black text-slate-300">Nama guest</span>
+            <input className="game-input mt-2 px-4 py-3" value={guestInput} onChange={(event) => setGuestInput(event.target.value)} placeholder="Guest_1234" />
           </label>
         )}
 
         <label className="mt-6 block">
-          <span className="text-sm font-black text-ink/70">Room code</span>
-          <input className="mt-2 w-full rounded-lg border border-ink/15 px-3 py-4 text-2xl font-black uppercase tracking-wide outline-none focus:border-mint" value={roomCode} onChange={(event) => setRoomCode(event.target.value.toUpperCase())} placeholder="ABC123" />
+          <span className="text-sm font-black text-slate-300">Room code</span>
+          <input className="game-input mt-2 px-4 py-4 text-2xl font-black uppercase tracking-wide" value={roomCode} onChange={(event) => setRoomCode(event.target.value.toUpperCase())} placeholder="ABC123" />
         </label>
 
         <Button className="mt-6 w-full" disabled={loading} type="submit">
