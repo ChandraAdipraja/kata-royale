@@ -1,0 +1,8 @@
+node_modules/
+dist/
+logs/
+services/kbbi-api/kv-data/
+.env
+backend/.env
+frontend/.env
+npm-debug.log*
