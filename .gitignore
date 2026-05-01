@@ -2,6 +2,7 @@ node_modules/
 dist/
 logs/
 services/kbbi-api/kv-data/
+services/kbbi-api/.wrangler/
 .env
 backend/.env
 frontend/.env

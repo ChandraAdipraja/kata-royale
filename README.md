@@ -41,7 +41,20 @@ copy backend\.env.example backend\.env
 
 3. Pastikan MongoDB lokal berjalan di `mongodb://127.0.0.1:27017/sambungkata`.
 
-4. Jalankan KBBI API lokal:
+4. Siapkan data KBBI lokal:
+
+```bash
+npm run kbbi:setup
+```
+
+Perintah ini akan:
+- menjalankan `prepare-data` dari repo KBBI API,
+- membuat `services/kbbi-api/kv-data/`,
+- mengisi Wrangler local preview KV agar endpoint lookup benar-benar membaca dataset KBBI.
+
+Folder `kv-data` sengaja tidak dicommit karena generated dan besar. Setiap developer cukup menjalankan setup ini sekali setelah clone.
+
+5. Jalankan KBBI API lokal:
 
 ```bash
 npm run dev:kbbi
@@ -49,13 +62,25 @@ npm run dev:kbbi
 
 Service KBBI repo ini berbasis Cloudflare Workers/Wrangler dan normalnya berjalan di `http://localhost:8787`.
 
-5. Jalankan backend:
+Tes cepat:
+
+```bash
+curl http://localhost:8787/api/lookup/rumah
+```
+
+Output yang benar:
+
+```json
+{"exists":true,"word":"rumah"}
+```
+
+6. Jalankan backend:
 
 ```bash
 npm run dev:backend
 ```
 
-6. Jalankan frontend:
+7. Jalankan frontend:
 
 ```bash
 npm run dev:frontend
@@ -73,3 +98,25 @@ Frontend tersedia di `http://localhost:5173`.
 - Cache validasi kata di MongoDB collection `words`.
 - Fallback validasi ke cache saat KBBI API down.
 - Statistik user login dan leaderboard berdasarkan winrate lalu total win.
+
+## Catatan untuk Push ke GitHub
+
+`services/kbbi-api` berasal dari repo lain. Ada dua cara yang aman:
+
+1. **Paling mudah untuk project kelas/demo:** commit isi folder `services/kbbi-api` ke repo utama.
+   Sebelum `git add`, hapus metadata Git di dalam service:
+
+   ```bash
+   rmdir /s /q services\kbbi-api\.git
+   ```
+
+   Setelah itu `git add .` akan memasukkan source KBBI API sebagai bagian dari repo SambungKata.
+
+2. **Cara Git yang lebih formal:** pakai Git submodule.
+   Teman yang clone harus menjalankan:
+
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+Untuk demo akhir, opsi pertama biasanya lebih simpel. Jangan commit `services/kbbi-api/kv-data/`, `.wrangler/`, atau `node_modules/`; semuanya sudah masuk `.gitignore`.

@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "install:all": "npm --prefix backend install && npm --prefix frontend install && npm --prefix services/kbbi-api install",
+    "kbbi:prepare": "npm --prefix services/kbbi-api run prepare-data",
+    "kbbi:upload-local": "node services/kbbi-api/scripts/upload-local-preview-kv.js",
+    "kbbi:setup": "npm run kbbi:prepare && npm run kbbi:upload-local",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:kbbi": "npm --prefix services/kbbi-api run dev"
