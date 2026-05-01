@@ -1,0 +1,21 @@
+{
+  "name": "open-api-kbbi",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "prepare-data": "node scripts/prepare-data.js",
+    "build": "echo 'No build step required for Workers'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251115.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.47.0"
+  }
+}
