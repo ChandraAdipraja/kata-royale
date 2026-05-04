@@ -24,6 +24,7 @@ const io = new Server(server, {
   cors: corsOptions
 });
 
+app.set("io", io);
 app.use(cors(corsOptions));
 app.use(express.json());
 

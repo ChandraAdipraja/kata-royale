@@ -34,6 +34,7 @@ const makePlayer = (socket, user, hp, isHost = false, guestName = "", guestId = 
     guestId: user ? null : guestId || socket.handshake.auth?.guestId || null,
     socketId: socket.id,
     username: user?.username || fallbackName,
+    avatar: user?.avatar || "Avatar1.png",
     isGuest: !user,
     isHost,
     ready: isHost,
@@ -74,6 +75,7 @@ const syncLobbyPlayers = async (game) => {
         guestId: player.guestId,
         socketId: player.socketId,
         username: player.username,
+        avatar: player.avatar || "Avatar1.png",
         isGuest: player.isGuest,
         isHost: player.isHost,
         ready: player.ready,
@@ -82,6 +84,42 @@ const syncLobbyPlayers = async (game) => {
       }))
     }
   );
+};
+
+export const syncUserAvatarInRooms = async (io, userId, avatar) => {
+  const userIdString = userId?.toString();
+  if (!io || !userIdString) return;
+
+  const lobbies = await Lobby.find({ "players.userId": userId });
+  await Promise.all(
+    lobbies.map(async (lobby) => {
+      let changed = false;
+
+      lobby.players.forEach((player) => {
+        if (player.userId?.toString() === userIdString) {
+          player.avatar = avatar;
+          changed = true;
+        }
+      });
+
+      if (!changed) return;
+      await lobby.save();
+      io.to(lobby.roomCode).emit("lobby:updated", publicLobby(lobby));
+    })
+  );
+
+  games.forEach((game) => {
+    let changed = false;
+
+    game.players.forEach((player) => {
+      if (player.userId?.toString() === userIdString) {
+        player.avatar = avatar;
+        changed = true;
+      }
+    });
+
+    if (changed) emitGameState(io, game);
+  });
 };
 
 const updateStats = async (game) => {
