@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, Copy, Crown, Play, Timer, UsersRound } from "lucide-react";
+import { CheckCircle2, Copy, Crown, LogOut, Play, Timer, UsersRound, X } from "lucide-react";
 import { Button } from "../components/Button.jsx";
-import { KbbiBadge } from "../components/KbbiBadge.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { useSocket } from "../hooks/useSocket.js";
@@ -16,6 +15,7 @@ export default function WaitingRoom() {
   const { showToast } = useToast();
   const [lobby, setLobby] = useState(state?.lobby || null);
   const [joining, setJoining] = useState(!state?.lobby);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
@@ -35,12 +35,18 @@ export default function WaitingRoom() {
       sessionStorage.setItem(`game:${roomCode}`, JSON.stringify(gameState));
       navigate(`/game/${roomCode}`, { state: { gameState } });
     };
+    const onClosed = () => {
+      showToast("Room dibubarkan oleh host", "warning");
+      navigate("/lobby/public");
+    };
     socket.on("lobby:updated", onLobby);
     socket.on("game:started", onStarted);
+    socket.on("lobby:closed", onClosed);
 
     return () => {
       socket.off("lobby:updated", onLobby);
       socket.off("game:started", onStarted);
+      socket.off("lobby:closed", onClosed);
     };
   }, [socket, roomCode, guestName, guestId, navigate, showToast]);
 
@@ -66,10 +72,23 @@ export default function WaitingRoom() {
     });
   };
 
+  const leaveRoom = () => {
+    setShowLeaveConfirm(false);
+    if (me?.isHost) {
+      socket.emit("lobby:close", { roomCode }, (res) => {
+        if (!res?.ok) showToast(res?.message || "Gagal membubarkan", "error");
+        navigate("/dashboard");
+      });
+      return;
+    }
+    socket?.disconnect();
+    navigate("/dashboard");
+  };
+
   if (!lobby) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-10">
-        <section className="panel rounded-2xl p-8 text-center">
+      <main className="flex min-h-screen items-center justify-center px-4 py-10">
+        <section className="panel w-full max-w-4xl rounded-2xl p-8 text-center">
           <h1 className="text-2xl font-black text-white">{joining ? "Masuk ke waiting room..." : "Lobby tidak tersedia"}</h1>
           <p className="mt-2 text-slate-400">Pastikan room code benar dan game belum selesai.</p>
         </section>
@@ -78,11 +97,10 @@ export default function WaitingRoom() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <section className="panel rounded-2xl border-t-4 border-t-yellow-400 p-6">
+      <main className="flex min-h-screen items-center justify-center px-4 py-8">
+        <section className="panel w-full max-w-6xl rounded-2xl border-t-4 border-t-yellow-400 p-6">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <KbbiBadge />
             <h1 className="mt-4 text-3xl font-black text-white">{lobby.name}</h1>
             <p className="mt-2 flex items-center gap-2 text-sm font-bold text-slate-400"><Crown size={16} className="text-yellow-400" /> Host: {host?.username || "-"}</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -147,16 +165,43 @@ export default function WaitingRoom() {
                   <Play size={18} /> Start Game
                 </Button>
               )}
+              <Button variant="ghost" onClick={() => setShowLeaveConfirm(true)}>
+                <LogOut size={18} /> {me?.isHost ? "Bubarkan Room" : "Keluar"}
+              </Button>
             </div>
           </aside>
         </div>
       </section>
+
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+          <div className="panel w-full max-w-md rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-white">Konfirmasi</h2>
+              <button className="text-slate-400 transition hover:text-white" onClick={() => setShowLeaveConfirm(false)} type="button">
+                <X size={20} />
+              </button>
+            </div>
+            <p className="mt-3 text-sm text-slate-400">
+              {me?.isHost ? "Yakin ingin bubarkan room ini?" : "Yakin ingin keluar dari room?"}
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button variant="secondary" className="w-full" onClick={() => setShowLeaveConfirm(false)}>
+                Batal
+              </Button>
+              <Button variant="danger" className="w-full" onClick={leaveRoom}>
+                {me?.isHost ? "Bubarkan" : "Keluar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
 
 const Setting = ({ label, value }) => (
-  <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-center">
+  <div className="flex min-h-[96px] flex-col items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-center">
     <div className="text-xs font-black uppercase text-slate-500">{label}</div>
     <div className="mt-2 text-2xl font-black text-white">{value}</div>
   </div>
