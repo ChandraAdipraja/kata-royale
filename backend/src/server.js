@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import lobbyRoutes from "./routes/lobbyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { registerGameSocket } from "./sockets/gameSocket.js";
 
@@ -30,6 +31,7 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ status: "ok", app: "SambungKata API" }));
 app.use("/api/auth", authRoutes);
+app.use("/api/lobbies", lobbyRoutes);
 app.use("/api/users", userRoutes);
 
 registerGameSocket(io);

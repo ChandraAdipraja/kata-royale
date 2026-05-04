@@ -86,6 +86,12 @@ select {
   box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.14);
 }
 
+select.game-input option,
+select.game-input optgroup {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
 .no-scrollbar {
   scrollbar-width: none;
 }

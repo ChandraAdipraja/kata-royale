@@ -6,6 +6,7 @@ import JoinLobby from "./pages/JoinLobby.jsx";
 import Landing from "./pages/Landing.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import Login from "./pages/Login.jsx";
+import PublicLobbies from "./pages/PublicLobbies.jsx";
 import Profile from "./pages/Profile.jsx";
 import Register from "./pages/Register.jsx";
 import Result from "./pages/Result.jsx";
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/lobby/create" element={<CreateLobby />} />
+          <Route path="/lobby/public" element={<PublicLobbies />} />
           <Route path="/lobby/join" element={<JoinLobby />} />
           <Route path="/lobby/:roomCode" element={<WaitingRoom />} />
           <Route path="/game/:roomCode" element={<Game />} />
