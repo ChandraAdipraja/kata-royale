@@ -105,11 +105,18 @@ export default function WaitingRoom() {
               {lobby.players.map((player) => (
                 <div key={player.userId || player.guestId || player.socketId} className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 transition hover:border-yellow-400/40">
                   <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="font-black text-white">{player.username}</div>
-                      <div className="mt-1 flex gap-2 text-xs font-black uppercase">
-                        <span className={player.isHost ? "text-yellow-300" : "text-slate-500"}>{player.isHost ? "Host" : "Player"}</span>
-                        {player.socketId === socket?.id && <span className="text-cyan-300">You</span>}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <img
+                        alt={`${player.username} avatar`}
+                        className="h-12 w-12 rounded-full border border-slate-700 bg-slate-950 object-cover"
+                        src={`/avatars/${player.avatar || "Avatar1.png"}`}
+                      />
+                      <div className="min-w-0">
+                        <div className="font-black text-white">{player.username}</div>
+                        <div className="mt-1 flex gap-2 text-xs font-black uppercase">
+                          <span className={player.isHost ? "text-yellow-300" : "text-slate-500"}>{player.isHost ? "Host" : "Player"}</span>
+                          {player.socketId === socket?.id && <span className="text-cyan-300">You</span>}
+                        </div>
                       </div>
                     </div>
                     <span className={`rounded-lg px-3 py-1 text-sm font-black ${player.ready || player.isHost ? "bg-emerald-400/10 text-emerald-300" : "bg-white/10 text-slate-400"}`}>

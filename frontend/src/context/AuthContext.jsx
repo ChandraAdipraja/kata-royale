@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../services/api.js";
 
 const AuthContext = createContext(null);
@@ -56,6 +56,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = useCallback((nextUser) => {
+    setUser(nextUser);
+    return nextUser;
+  }, []);
+
   const enterGuest = (name) => {
     const nextName = name?.trim() || `Guest_${Math.floor(1000 + Math.random() * 9000)}`;
     const nextGuestId = guestId || makeGuestId();
@@ -77,10 +82,11 @@ export const AuthProvider = ({ children }) => {
       register,
       logout,
       enterGuest,
+      updateUser,
       isAuthenticated: Boolean(user),
       displayName: user?.username || guestName || "Guest"
     }),
-    [user, token, guestName, guestId, loading]
+    [user, token, guestName, guestId, loading, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

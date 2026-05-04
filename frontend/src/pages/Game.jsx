@@ -150,9 +150,11 @@ export default function Game() {
               className={`relative min-w-[150px] rounded-2xl border p-3 text-center transition duration-300 ${isTurn ? "z-10 scale-105 border-indigo-400 bg-indigo-600 shadow-[0_0_24px_rgba(79,70,229,0.45)]" : "border-slate-700 bg-slate-900/80"} ${eliminated ? "opacity-45 grayscale" : ""} ${shakingId === playerId(player) ? "shake" : ""}`}
             >
               {isTurn && <span className="absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-yellow-400 shadow-[0_0_14px_rgba(250,204,21,0.85)]" />}
-              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 text-lg font-black text-slate-950">
-                {player.username?.charAt(0)?.toUpperCase() || "P"}
-              </div>
+              <img
+                alt={`${player.username} avatar`}
+                className="mx-auto h-11 w-11 rounded-full border border-slate-700 bg-slate-950 object-cover"
+                src={`/avatars/${player.avatar || "Avatar1.png"}`}
+              />
               <div className="mt-2 truncate text-sm font-black text-white">{player.username}</div>
               <div className="mt-2 flex justify-center gap-1 text-rose-400" aria-label={`${player.hp} HP`}>
                 {Array.from({ length: game.maxHp || 3 }).map((_, index) => (
@@ -186,8 +188,16 @@ export default function Game() {
             </div>
           </div>
 
-          <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 text-3xl font-black tracking-wide text-cyan-100">
-            {remotePreview || localPreview}
+          <div className="mx-auto mt-8 flex max-w-xl items-center gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 text-left">
+            <img
+              alt={`${activePlayer?.username || "Player"} avatar`}
+              className="h-14 w-14 rounded-full border border-cyan-300/40 bg-slate-950 object-cover"
+              src={`/avatars/${activePlayer?.avatar || "Avatar1.png"}`}
+            />
+            <div className="min-w-0">
+              <div className="text-xs font-black uppercase text-cyan-300">{activePlayer?.username || game.currentTurnUsername}</div>
+              <div className="mt-1 break-words text-3xl font-black tracking-wide text-cyan-100">{remotePreview || localPreview}</div>
+            </div>
           </div>
 
           <form onSubmit={submit} className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row">
