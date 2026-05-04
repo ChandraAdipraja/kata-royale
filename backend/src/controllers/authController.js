@@ -10,7 +10,8 @@ const userPayload = (user) => ({
   win: user.win,
   lose: user.lose,
   winrate: user.winrate,
-  totalValidWords: user.totalValidWords
+  totalValidWords: user.totalValidWords,
+  avatar: user.avatar || "Avatar1.png"
 });
 
 export const register = async (req, res) => {

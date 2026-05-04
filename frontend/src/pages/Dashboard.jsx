@@ -16,9 +16,24 @@ export default function Dashboard() {
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col py-8">
       <header className="mb-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-800 bg-gradient-to-br from-yellow-400 to-amber-600 text-xl font-black text-slate-950">
-            {displayName?.charAt(0)?.toUpperCase() || "G"}
-          </div>
+          {user ? (
+            <Link
+              aria-label="Edit profile avatar"
+              className="rounded-full transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-slate-950"
+              state={{ openAvatarEditor: true }}
+              to="/profile"
+            >
+              <img
+                alt={`${user.username} avatar`}
+                className="h-12 w-12 rounded-full border-2 border-slate-800 bg-slate-900 object-cover"
+                src={`/avatars/${user.avatar || "Avatar1.png"}`}
+              />
+            </Link>
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-800 bg-gradient-to-br from-yellow-400 to-amber-600 text-xl font-black text-slate-950">
+              {displayName?.charAt(0)?.toUpperCase() || "G"}
+            </div>
+          )}
           <div>
             <h1 className="text-lg font-black leading-tight text-white">{displayName}</h1>
             <p className="flex items-center gap-1 text-sm font-bold text-yellow-400"><Trophy size={14} /> {user ? `${user.winrate}% Winrate` : "Guest Mode"}</p>

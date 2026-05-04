@@ -6,6 +6,7 @@ const lobbyPlayerSchema = new mongoose.Schema(
     guestId: { type: String, default: null },
     socketId: { type: String, required: true },
     username: { type: String, required: true },
+    avatar: { type: String },
     isGuest: { type: Boolean, default: true },
     isHost: { type: Boolean, default: false },
     ready: { type: Boolean, default: false },

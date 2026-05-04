@@ -7,6 +7,7 @@ const matchSchema = new mongoose.Schema({
       userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
       guestId: String,
       username: String,
+      avatar: String,
       isGuest: Boolean,
       hp: Number,
       alive: Boolean
@@ -16,6 +17,7 @@ const matchSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     guestId: String,
     username: String,
+    avatar: String,
     isGuest: Boolean
   },
   wordsUsed: [String],

@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema(
     win: { type: Number, default: 0 },
     lose: { type: Number, default: 0 },
     winrate: { type: Number, default: 0 },
-    totalValidWords: { type: Number, default: 0 }
+    totalValidWords: { type: Number, default: 0 },
+    avatar: { type: String, default: "Avatar1.png" }
   },
   { timestamps: true }
 );
