@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, Heart, Send, Timer, WifiOff } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Heart, Send, Tag, Timer, WifiOff } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -127,8 +127,18 @@ export default function Game() {
     );
   }
 
+  const categoryLabel = game.currentCategory
+    ? game.currentCategory.charAt(0).toUpperCase() + game.currentCategory.slice(1)
+    : null;
+
+  const inputPlaceholder = isMyTurn
+    ? game.currentCategory
+      ? `Huruf ${game.currentLetter.toUpperCase()} · kategori ${categoryLabel}`
+      : `Mulai dengan ${game.currentLetter.toUpperCase()}`
+    : "Menunggu giliran pemain lain...";
+
   return (
-    <main className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5">
+    <main className="mx-auto flex max-w-4xl flex-col gap-5 px-4 py-5">
       <section className="panel rounded-2xl px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -139,7 +149,7 @@ export default function Game() {
         </div>
       </section>
 
-      <section className="flex gap-3 overflow-x-auto px-1 py-3 no-scrollbar">
+      <section className="flex justify-center gap-3 overflow-x-auto px-1 py-3 no-scrollbar">
         {game.players.map((player) => {
           const isTurn = game.currentTurnPlayerId === playerId(player);
           const isYou = player.socketId === socket?.id;
@@ -171,40 +181,48 @@ export default function Game() {
         })}
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-[1fr_0.74fr]">
-        <div className="panel rounded-2xl p-6 text-center">
-          <p className="text-sm font-black uppercase tracking-widest text-slate-400">{isMyTurn ? "Giliran kamu" : `Giliran ${activePlayer?.username || game.currentTurnUsername}`}</p>
+      <section className="panel rounded-2xl p-6 text-center">
+        <p className="text-sm font-black uppercase tracking-widest text-slate-400">{isMyTurn ? "Giliran kamu" : `Giliran ${activePlayer?.username || game.currentTurnUsername}`}</p>
 
-          <div className="relative mx-auto mt-6 flex h-52 w-52 items-center justify-center">
-            <div className={`absolute inset-0 rounded-full border-8 ${game.secondsLeft <= 5 ? "border-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.3)]" : "border-yellow-400/80 shadow-[0_0_30px_rgba(250,204,21,0.18)]"}`} />
-            <div className="absolute inset-4 rounded-full border-4 border-slate-800 bg-slate-950/75 backdrop-blur" />
-            <div className="relative">
-              <div className="text-xs font-black uppercase tracking-widest text-slate-500">Awalan</div>
-              <div className="text-8xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400">{game.currentLetter}</div>
-            </div>
-            <div className={`absolute -bottom-2 rounded-full border-2 px-4 py-1 text-lg font-black ${game.secondsLeft <= 5 ? "border-rose-300 bg-rose-500 text-white" : "border-slate-600 bg-slate-900 text-yellow-300"}`}>
-              <Timer size={16} className="mr-1 inline" />
-              {game.secondsLeft}s
-            </div>
+        <div className="relative mx-auto mt-6 flex h-52 w-52 items-center justify-center">
+          <div className={`absolute inset-0 rounded-full border-8 ${game.secondsLeft <= 5 ? "border-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.3)]" : "border-yellow-400/80 shadow-[0_0_30px_rgba(250,204,21,0.18)]"}`} />
+          <div className="absolute inset-4 rounded-full border-4 border-slate-800 bg-slate-950/75 backdrop-blur" />
+          <div className="relative">
+            <div className="text-xs font-black uppercase tracking-widest text-slate-500">Awalan</div>
+            <div className="text-8xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400">{game.currentLetter}</div>
           </div>
-
-          <div className="text-center justify-center mx-auto mt-8 flex max-w-xl items-center gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 text-left">
-            <div className="text-center items-center min-w-0">
-              <div className="text-center mt-1 break-words text-3xl font-black tracking-wide text-cyan-100">{remotePreview || localPreview}</div>
-            </div>
+          <div className={`absolute -bottom-2 rounded-full border-2 px-4 py-1 text-lg font-black ${game.secondsLeft <= 5 ? "border-rose-300 bg-rose-500 text-white" : "border-slate-600 bg-slate-900 text-yellow-300"}`}>
+            <Timer size={16} className="mr-1 inline" />
+            {game.secondsLeft}s
           </div>
-
-          <form onSubmit={submit} className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row">
-            <input
-              className="game-input min-h-14 flex-1 px-5 text-lg font-bold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!isMyTurn}
-              placeholder={isMyTurn ? `Mulai dengan ${game.currentLetter.toUpperCase()}` : "Menunggu giliran pemain lain..."}
-              value={word}
-              onChange={(event) => typeWord(event.target.value)}
-            />
-            <Button disabled={!isMyTurn} type="submit"><Send size={18} /> Submit</Button>
-          </form>
         </div>
+
+        {categoryLabel && (
+          <div className="mt-8 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/15 px-6 py-2.5">
+              <Tag size={14} className="text-violet-400 shrink-0" />
+              <span className="text-xs font-black uppercase tracking-widest text-slate-400">Kategori</span>
+              <span className="text-lg font-black capitalize text-violet-200">{categoryLabel}</span>
+            </div>
+          </div>
+        )}
+
+        <div className={`text-center justify-center mx-auto flex max-w-xl items-center gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 ${categoryLabel ? "mt-4" : "mt-8"}`}>
+          <div className="text-center items-center min-w-0 w-full">
+            <div className="text-center mt-1 break-words text-3xl font-black tracking-wide text-cyan-100">{remotePreview || localPreview}</div>
+          </div>
+        </div>
+
+        <form onSubmit={submit} className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row">
+          <input
+            className="game-input min-h-14 flex-1 px-5 text-lg font-bold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!isMyTurn}
+            placeholder={inputPlaceholder}
+            value={word}
+            onChange={(event) => typeWord(event.target.value)}
+          />
+          <Button disabled={!isMyTurn} type="submit"><Send size={18} /> Submit</Button>
+        </form>
       </section>
     </main>
   );
