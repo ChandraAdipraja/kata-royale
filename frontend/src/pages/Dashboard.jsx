@@ -72,9 +72,9 @@ export default function Dashboard() {
         <ActionCard
           icon={ArrowRight}
           title="Gabung Lobby"
-          description="Punya kode ruangan? Masukkan kode dari host untuk langsung masuk waiting room."
-          to="/lobby/join"
-          button="Gabung"
+          description="Lihat daftar lobby publik dan masuk via kode untuk lobby privat."
+          to="/lobby/public"
+          button="Lihat Lobby"
           buttonIcon={Plus}
           tone="cyan"
         />

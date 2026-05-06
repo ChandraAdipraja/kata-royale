@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Lock, Plus, Unlock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, Lock, Plus, Unlock } from "lucide-react";
 import { Button } from "../components/Button.jsx";
-import { KbbiBadge } from "../components/KbbiBadge.jsx";
 import { useSocket } from "../hooks/useSocket.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -31,18 +30,21 @@ export default function CreateLobby() {
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
-      <form onSubmit={submit} className="panel rounded-2xl p-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-          <div>
-            <KbbiBadge />
-            <h1 className="mt-4 text-3xl font-black text-white">Create Lobby</h1>
-            <p className="mt-2 text-slate-400">Atur room classic dan bagikan room code ke pemain lain.</p>
+    <main className="flex min-h-screen items-center justify-center px-4 py-8">
+      <div className="w-full max-w-2xl">
+        <Link to="/dashboard" className="inline-flex rounded-xl bg-slate-800 p-3 text-white transition hover:bg-slate-700">
+          <ArrowRight className="rotate-180" size={20} />
+        </Link>
+        <form onSubmit={submit} className="panel mt-4 rounded-2xl p-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <div>
+              <h1 className="text-3xl font-black text-white">Create Lobby</h1>
+              <p className="mt-2 text-slate-400">Atur room classic dan bagikan room code ke pemain lain.</p>
+            </div>
+            <div className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-black text-cyan-200">
+              {form.isPublic ? <Unlock size={16} className="inline" /> : <Lock size={16} className="inline" />} {form.isPublic ? "Public" : "Private"}
+            </div>
           </div>
-          <div className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-black text-cyan-200">
-            {form.isPublic ? <Unlock size={16} className="inline" /> : <Lock size={16} className="inline" />} {form.isPublic ? "Public" : "Private"}
-          </div>
-        </div>
 
         {!user && !guestName && (
           <div className="mt-6">
@@ -53,9 +55,24 @@ export default function CreateLobby() {
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Field label="Nama lobby" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
-          <Field label="Max player" type="number" min="2" max="8" value={form.maxPlayers} onChange={(value) => setForm({ ...form, maxPlayers: value })} />
-          <Field label="HP" type="number" min="1" max="9" value={form.hp} onChange={(value) => setForm({ ...form, hp: value })} />
-          <Field label="Timer detik" type="number" min="5" max="60" value={form.timer} onChange={(value) => setForm({ ...form, timer: value })} />
+          <SelectField
+            label="Max player"
+            value={form.maxPlayers}
+            onChange={(value) => setForm({ ...form, maxPlayers: value })}
+            options={[2, 3, 4, 5, 6, 7, 8]}
+          />
+          <SelectField
+            label="HP"
+            value={form.hp}
+            onChange={(value) => setForm({ ...form, hp: value })}
+            options={[1, 2, 3]}
+          />
+          <SelectField
+            label="Timer detik"
+            value={form.timer}
+            onChange={(value) => setForm({ ...form, timer: value })}
+            options={[5, 10, 15, 20]}
+          />
         </div>
 
         <label className="mt-5 flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-sm font-black text-slate-200">
@@ -63,10 +80,11 @@ export default function CreateLobby() {
           Lobby public
         </label>
 
-        <Button className="mt-6 w-full sm:w-auto" variant="accent" disabled={loading} type="submit">
-          <Plus size={18} /> {loading ? "Membuat..." : "Create Lobby"}
-        </Button>
-      </form>
+          <Button className="mt-6 w-full sm:w-auto" variant="accent" disabled={loading} type="submit">
+            <Plus size={18} /> {loading ? "Membuat..." : "Create Lobby"}
+          </Button>
+        </form>
+      </div>
     </main>
   );
 }
@@ -75,5 +93,23 @@ const Field = ({ label, value, onChange, ...props }) => (
   <label className="block">
     <span className="text-sm font-black text-slate-300">{label}</span>
     <input className="game-input mt-2 px-4 py-3" value={value} onChange={(event) => onChange(event.target.value)} {...props} />
+  </label>
+);
+
+const SelectField = ({ label, value, onChange, options }) => (
+  <label className="block">
+    <span className="text-sm font-black text-slate-300">{label}</span>
+    <div className="relative mt-2">
+      <select
+        className="game-input w-full appearance-none px-4 py-3 pr-10"
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+      </select>
+      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">▾</span>
+    </div>
   </label>
 );

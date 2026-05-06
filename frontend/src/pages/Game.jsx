@@ -188,15 +188,9 @@ export default function Game() {
             </div>
           </div>
 
-          <div className="mx-auto mt-8 flex max-w-xl items-center gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 text-left">
-            <img
-              alt={`${activePlayer?.username || "Player"} avatar`}
-              className="h-14 w-14 rounded-full border border-cyan-300/40 bg-slate-950 object-cover"
-              src={`/avatars/${activePlayer?.avatar || "Avatar1.png"}`}
-            />
-            <div className="min-w-0">
-              <div className="text-xs font-black uppercase text-cyan-300">{activePlayer?.username || game.currentTurnUsername}</div>
-              <div className="mt-1 break-words text-3xl font-black tracking-wide text-cyan-100">{remotePreview || localPreview}</div>
+          <div className="text-center justify-center mx-auto mt-8 flex max-w-xl items-center gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 text-left">
+            <div className="text-center items-center min-w-0">
+              <div className="text-center mt-1 break-words text-3xl font-black tracking-wide text-cyan-100">{remotePreview || localPreview}</div>
             </div>
           </div>
 
@@ -211,33 +205,6 @@ export default function Game() {
             <Button disabled={!isMyTurn} type="submit"><Send size={18} /> Submit</Button>
           </form>
         </div>
-
-        <aside className="grid gap-5">
-          <section className="panel rounded-2xl p-5">
-            <h2 className="text-xl font-black text-white">Word Chain</h2>
-            <div className="mt-4 max-h-56 overflow-y-auto text-sm font-bold leading-9 text-slate-300 no-scrollbar">
-              {game.wordsUsed.length ? game.wordsUsed.map((item, index) => (
-                <span key={`${item}_${index}`}>
-                  <span className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 shadow-sm">{item}</span>
-                  {index < game.wordsUsed.length - 1 && <span className="mx-2 text-yellow-400">-&gt;</span>}
-                </span>
-              )) : <p className="text-slate-500">Belum ada kata valid.</p>}
-            </div>
-          </section>
-
-          <section className="panel rounded-2xl p-5">
-            <h2 className="text-xl font-black text-white">Activity Log</h2>
-            <div className="mt-4 max-h-72 space-y-2 overflow-y-auto no-scrollbar">
-              {activity.length ? activity.map((item) => (
-                <div key={item.id} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${item.type === "success" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200" : item.type === "error" ? "border-rose-400/20 bg-rose-400/10 text-rose-200" : item.type === "warning" ? "border-amber-400/20 bg-amber-400/10 text-amber-200" : "border-slate-700 bg-slate-900/70 text-slate-300"}`}>
-                  {item.type === "success" && <CheckCircle2 size={15} className="mr-1 inline" />}
-                  {(item.type === "error" || item.type === "warning") && <AlertTriangle size={15} className="mr-1 inline" />}
-                  {item.message}
-                </div>
-              )) : <p className="text-sm text-slate-500">Aktivitas akan muncul saat match berjalan.</p>}
-            </div>
-          </section>
-        </aside>
       </section>
     </main>
   );

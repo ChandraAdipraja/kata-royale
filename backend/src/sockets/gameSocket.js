@@ -373,6 +373,19 @@ export const registerGameSocket = (io) => {
       startTimer(io, game);
     });
 
+    socket.on("lobby:close", async ({ roomCode } = {}, callback) => {
+      const code = roomCode?.toUpperCase();
+      const lobby = await Lobby.findOne({ roomCode: code, status: "waiting" });
+      if (!lobby) return callback?.({ ok: false, message: "Lobby tidak ditemukan" });
+
+      const host = lobby.players.find((player) => player.socketId === socket.id && player.isHost);
+      if (!host) return callback?.({ ok: false, message: "Hanya host yang bisa membubarkan" });
+
+      io.to(code).emit("lobby:closed", { roomCode: code });
+      await Lobby.deleteOne({ roomCode: code });
+      callback?.({ ok: true });
+    });
+
     socket.on("game:typing", ({ roomCode, text } = {}) => {
       const game = games.get(roomCode?.toUpperCase());
       if (!game || game.status !== "playing") return;
@@ -428,6 +441,10 @@ export const registerGameSocket = (io) => {
         lobbies.map(async (lobby) => {
           const leaving = lobby.players.find((player) => player.socketId === socket.id);
           lobby.players = lobby.players.filter((player) => player.socketId !== socket.id);
+          if (lobby.players.length === 0) {
+            await Lobby.deleteOne({ roomCode: lobby.roomCode });
+            return;
+          }
           if (leaving?.isHost && lobby.players[0]) {
             lobby.players[0].isHost = true;
             lobby.players[0].ready = true;

@@ -24,27 +24,22 @@ export default function Leaderboard() {
   }, [authUser]);
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <section className="panel rounded-2xl p-6">
+      <Link
+        to={user ? "/dashboard" : "/"}
+        className="inline-flex rounded-xl bg-slate-800 p-3 text-white transition hover:bg-slate-700"
+      >
+        <ArrowRight className="rotate-180" size={24} />
+      </Link>
+      <section className="panel mt-4 rounded-2xl p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div className="flex items-start gap-4">
-            <Link
-              to={user ? "/dashboard" : "/"}
-              className="rounded-xl bg-slate-800 p-3 text-white transition hover:bg-slate-700"
-            >
-              <ArrowRight className="rotate-180" size={24} />
-            </Link>
-            <div>
-              <p className="text-sm font-black uppercase text-yellow-300">
-                Ranking
-              </p>
-              <h1 className="mt-2 flex items-center gap-2 text-3xl font-black text-white">
-                <Trophy size={30} className="text-yellow-400" /> Leaderboard
-              </h1>
-            </div>
+          <div>
+            <p className="text-sm font-black uppercase text-yellow-300">
+              Ranking
+            </p>
+            <h1 className="mt-2 flex items-center gap-2 text-3xl font-black text-white">
+              <Trophy size={30} className="text-yellow-400" /> Leaderboard
+            </h1>
           </div>
-          <p className="text-sm font-semibold text-slate-400">
-            Diurutkan berdasarkan winrate, lalu total win.
-          </p>
         </div>
 
         <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-700 bg-slate-900/70">
@@ -86,11 +81,10 @@ export default function Leaderboard() {
                   className="border-t border-slate-700 text-slate-300 transition hover:bg-white/5"
                 >
                   <td className="px-4 py-3 font-black text-yellow-300">
-                    {index < 3 ? (
-                      <Crown size={18} className="inline" />
-                    ) : (
-                      `#${index + 1}`
-                    )}
+                    {index === 0 && <Crown size={18} className="inline text-yellow-400" />}
+                    {index === 1 && <Crown size={18} className="inline text-slate-300" />}
+                    {index === 2 && <Crown size={18} className="inline text-amber-600" />}
+                    {index > 2 && `#${index + 1}`}
                   </td>
                   <td className="px-4 py-3 font-bold text-white">
                     {user.username}
