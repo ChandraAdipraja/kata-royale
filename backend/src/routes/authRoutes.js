@@ -6,9 +6,19 @@ import { signToken } from "../utils/auth.js";
 
 const router = Router();
 
+const normalizeUrl = (url) => url.replace(/\/+$/, "");
+const getClientUrl = () => {
+  const [clientUrl] = (process.env.CLIENT_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return normalizeUrl(clientUrl);
+};
+
 const oauthSuccessRedirect = (req, res) => {
   const token = signToken(req.user);
-  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  const clientUrl = getClientUrl();
 
   res.redirect(`${clientUrl}/oauth/callback?token=${token}`);
 };
@@ -29,7 +39,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/login`,
+    failureRedirect: `${getClientUrl()}/login`,
     session: false
   }),
   oauthSuccessRedirect
@@ -45,7 +55,7 @@ router.get(
 router.get(
   "/discord/callback",
   passport.authenticate("discord", {
-    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/login`,
+    failureRedirect: `${getClientUrl()}/login`,
     session: false
   }),
   oauthSuccessRedirect

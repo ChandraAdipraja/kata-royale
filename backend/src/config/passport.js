@@ -5,7 +5,8 @@ import { Strategy as DiscordStrategy } from "passport-discord";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import User from "../models/User.js";
 
-const API_URL = process.env.API_URL || "http://localhost:5000";
+const normalizeUrl = (url) => url.replace(/\/+$/, "");
+const API_URL = normalizeUrl(process.env.API_URL || "http://localhost:5000");
 
 const makeUniqueUsername = async (baseName) => {
   const fallbackName = `player-${crypto.randomBytes(3).toString("hex")}`;
