@@ -4,6 +4,7 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./config/db.js";
+import passport from "./config/passport.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { registerGameSocket } from "./sockets/gameSocket.js";
@@ -27,6 +28,7 @@ const io = new Server(server, {
 app.set("io", io);
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(passport.initialize());
 
 app.get("/health", (_req, res) => res.json({ status: "ok", app: "SambungKata API" }));
 app.use("/api/auth", authRoutes);

@@ -6,6 +6,7 @@ import JoinLobby from "./pages/JoinLobby.jsx";
 import Landing from "./pages/Landing.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import Login from "./pages/Login.jsx";
+import OAuthCallback from "./pages/OAuthCallback.jsx";
 import Profile from "./pages/Profile.jsx";
 import Register from "./pages/Register.jsx";
 import Result from "./pages/Result.jsx";
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/register" element={<Register />} />
           <Route path="/lobby/create" element={<CreateLobby />} />
           <Route path="/lobby/join" element={<JoinLobby />} />

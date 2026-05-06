@@ -1,12 +1,54 @@
 import { Router } from "express";
 import { login, logout, me, register } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import passport from "../config/passport.js";
+import { signToken } from "../utils/auth.js";
 
 const router = Router();
+
+const oauthSuccessRedirect = (req, res) => {
+  const token = signToken(req.user);
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+  res.redirect(`${clientUrl}/oauth/callback?token=${token}`);
+};
 
 router.post("/register", register);
 router.post("/login", login);
 router.post("/logout", logout);
 router.get("/me", protect, me);
+
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false
+  })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/login`,
+    session: false
+  }),
+  oauthSuccessRedirect
+);
+
+router.get(
+  "/discord",
+  passport.authenticate("discord", {
+    session: false
+  })
+);
+
+router.get(
+  "/discord/callback",
+  passport.authenticate("discord", {
+    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/login`,
+    session: false
+  }),
+  oauthSuccessRedirect
+);
 
 export default router;
