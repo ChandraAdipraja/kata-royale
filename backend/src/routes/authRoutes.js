@@ -32,33 +32,34 @@ router.get(
   "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
-    session: false
-  })
+    session: false,
+  }),
 );
 
 router.get(
   "/google/callback",
   passport.authenticate("google", {
     failureRedirect: `${getClientUrl()}/login`,
-    session: false
+    session: false,
   }),
-  oauthSuccessRedirect
+  oauthSuccessRedirect,
 );
 
 router.get(
   "/discord",
   passport.authenticate("discord", {
-    session: false
-  })
+    scope: ["identify", "email"],
+    session: false,
+  }),
 );
 
 router.get(
   "/discord/callback",
   passport.authenticate("discord", {
     failureRedirect: `${getClientUrl()}/login`,
-    session: false
+    session: false,
   }),
-  oauthSuccessRedirect
+  oauthSuccessRedirect,
 );
 
 export default router;
