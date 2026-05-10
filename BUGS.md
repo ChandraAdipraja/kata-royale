@@ -23,18 +23,19 @@
    - Saat submit kata, backend mengecek KBBI dulu lalu mengecek kategori.
    - Frontend menampilkan kategori aktif di halaman game.
 
-2. Validator kategori bergantung pada `GEMINI_API_KEY`.
-   - Jika key kosong, semua jawaban kategori akan ditolak dengan pesan `Validator kategori tidak tersedia`.
+2. Validator kategori sudah memakai hybrid fallback.
+   - Urutan sekarang: dictionary lokal, cache MongoDB, Gemini, lalu Cloudflare Workers AI.
+   - Jika semua validator eksternal tidak tersedia dan kata tidak ada di dictionary/cache, jawaban kategori akan ditolak dengan pesan `Validator kategori tidak tersedia`.
    - Saat ini belum ada preflight check saat host mengaktifkan kategori atau start game.
 
 3. Cache kategori berjalan.
    - Model `CategoryValidation` punya unique index untuk pasangan `word + category`.
    - Jalur cache sudah dites dengan data sementara dan menghasilkan response valid dari cache.
 
-4. Risiko performa paling besar ada di cache miss.
-   - Setiap pasangan kata-kategori baru memanggil Gemini dengan timeout 8 detik.
-   - Timer game tetap berjalan ketika backend menunggu response validasi.
-   - Pada timer pendek, pemain bisa terkena timeout saat validasi masih berjalan, lalu hasil validasi lama bisa datang terlambat dan berpotensi mengubah state turn yang sudah maju.
+4. Risiko performa paling besar ada di cache miss yang tidak ada di dictionary.
+   - Setiap pasangan kata-kategori baru bisa memanggil Gemini, lalu Cloudflare jika Gemini gagal.
+   - Timer sekarang dipause saat backend sedang memvalidasi kata, dan submit ganda ditolak dengan pesan `Kata sedang divalidasi`.
+   - Sisa risiko: validasi AI tetap bisa terasa lambat pada cache miss pertama.
 
 5. Hasil LLM tidak sepenuhnya deterministik secara produk.
    - Temperature sudah 0, tetapi kategori seperti `benda`, `makanan`, `tempat`, atau kata ambigu tetap bisa menghasilkan keputusan yang terasa tidak konsisten.
