@@ -10,6 +10,7 @@ const serializeLobby = (lobby) => {
     maxPlayers: lobby.settings.maxPlayers,
     timer: lobby.settings.timer,
     hp: lobby.settings.hp,
+    categoryChallenge: Boolean(lobby.settings.categoryChallenge),
     hostName: host?.username || "Host",
     updatedAt: lobby.updatedAt
   };

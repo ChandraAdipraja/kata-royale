@@ -4,6 +4,7 @@ import Match from "../models/Match.js";
 import User from "../models/User.js";
 import { verifyToken } from "../utils/auth.js";
 import { validateWord } from "../utils/wordValidationService.js";
+import { validateCategory, randomCategory } from "../utils/categoryValidationService.js";
 
 const games = new Map();
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -51,9 +52,12 @@ const emitLobby = async (io, roomCode) => {
 const statePayload = (game) => ({
   roomCode: game.roomCode,
   currentLetter: game.currentLetter,
+  currentCategory: game.currentCategory,
   currentTurnPlayerId: playerKey(game.players[game.turnIndex]),
   currentTurnUsername: game.players[game.turnIndex]?.username,
   secondsLeft: game.secondsLeft,
+  isValidating: Boolean(game.isValidating),
+  validatingWord: game.validatingWord || "",
   timer: game.settings.timer,
   maxHp: game.settings.hp,
   players: game.players,
@@ -204,6 +208,7 @@ const startTimer = (io, game) => {
   clearInterval(game.interval);
   game.interval = setInterval(async () => {
     if (game.status !== "playing") return;
+    if (game.isValidating) return;
 
     game.secondsLeft -= 1;
     emitGameState(io, game);
@@ -227,7 +232,8 @@ export const registerGameSocket = (io) => {
           maxPlayers: Number(payload.maxPlayers) || 4,
           hp: Number(payload.hp) || 3,
           timer: Number(payload.timer) || 15,
-          isPublic: payload.isPublic !== false
+          isPublic: payload.isPublic !== false,
+          categoryChallenge: Boolean(payload.categoryChallenge)
         };
 
         const roomCode = makeRoomCode();
@@ -353,15 +359,19 @@ export const registerGameSocket = (io) => {
           maxPlayers: lobby.settings.maxPlayers,
           hp: lobby.settings.hp,
           timer: lobby.settings.timer,
-          isPublic: lobby.settings.isPublic
+          isPublic: lobby.settings.isPublic,
+          categoryChallenge: lobby.settings.categoryChallenge
         },
         players: lobby.players.map((player) => player.toObject()),
         currentLetter: randomLetter(),
+        currentCategory: lobby.settings.categoryChallenge ? randomCategory() : null,
         turnIndex: 0,
         secondsLeft: lobby.settings.timer,
         wordsUsed: [],
         wordEvents: [],
         status: "playing",
+        isValidating: false,
+        validatingWord: "",
         winner: null,
         interval: null
       };
@@ -406,33 +416,60 @@ export const registerGameSocket = (io) => {
 
       const current = game.players[game.turnIndex];
       if (!current || current.socketId !== socket.id) return callback?.({ ok: false, message: "Belum giliran kamu" });
+      if (game.isValidating) return callback?.({ ok: false, message: "Kata sedang divalidasi" });
 
       const normalized = String(word || "").trim().toLowerCase();
-      if (game.wordsUsed.includes(normalized)) {
-        await penalizeCurrentPlayer(io, game, "Kata sudah pernah digunakan");
-        return callback?.({ ok: false, message: "Kata sudah pernah digunakan" });
+      game.isValidating = true;
+      game.validatingWord = normalized;
+      emitGameState(io, game);
+
+      try {
+        if (!/^[a-z]([a-z-]*[a-z])?$/.test(normalized)) {
+          await penalizeCurrentPlayer(io, game, "Kata hanya boleh mengandung huruf a-z dan tanda hubung");
+          return callback?.({ ok: false, message: "Kata hanya boleh mengandung huruf a-z dan tanda hubung" });
+        }
+
+        if (game.wordsUsed.includes(normalized)) {
+          await penalizeCurrentPlayer(io, game, "Kata sudah pernah digunakan");
+          return callback?.({ ok: false, message: "Kata sudah pernah digunakan" });
+        }
+
+        const kbbiResult = await validateWord(normalized, game.currentLetter);
+        if (!kbbiResult.isValid) {
+          game.wordEvents.push({ word: normalized, userId: current.userId, isValid: false });
+          await penalizeCurrentPlayer(io, game, kbbiResult.reason);
+          return callback?.({ ok: false, message: kbbiResult.reason });
+        }
+
+        if (game.settings.categoryChallenge) {
+          const categoryResult = await validateCategory(normalized, game.currentCategory);
+          if (!categoryResult.isValid) {
+            game.wordEvents.push({ word: normalized, userId: current.userId, isValid: false });
+            await penalizeCurrentPlayer(io, game, categoryResult.reason);
+            return callback?.({ ok: false, message: categoryResult.reason });
+          }
+        }
+
+        game.wordEvents.push({ word: normalized, userId: current.userId, isValid: true });
+        game.wordsUsed.push(normalized);
+        game.currentLetter = normalized.at(-1);
+        if (game.settings.categoryChallenge) game.currentCategory = randomCategory();
+        game.secondsLeft = game.settings.timer;
+        io.to(game.roomCode).emit("game:word_valid", {
+          playerId: playerKey(current),
+          username: current.username,
+          word: normalized,
+          nextLetter: game.currentLetter,
+          nextCategory: game.currentCategory
+        });
+
+        await moveTurn(io, game);
+        callback?.({ ok: true, state: statePayload(game) });
+      } finally {
+        game.isValidating = false;
+        game.validatingWord = "";
+        emitGameState(io, game);
       }
-
-      const result = await validateWord(normalized, game.currentLetter);
-      game.wordEvents.push({ word: normalized, userId: current.userId, isValid: result.isValid });
-
-      if (!result.isValid) {
-        await penalizeCurrentPlayer(io, game, result.reason);
-        return callback?.({ ok: false, message: result.reason });
-      }
-
-      game.wordsUsed.push(normalized);
-      game.currentLetter = normalized.at(-1);
-      game.secondsLeft = game.settings.timer;
-      io.to(game.roomCode).emit("game:word_valid", {
-        playerId: playerKey(current),
-        username: current.username,
-        word: normalized,
-        nextLetter: game.currentLetter
-      });
-
-      await moveTurn(io, game);
-      callback?.({ ok: true, state: statePayload(game) });
     });
 
     socket.on("disconnect", async () => {

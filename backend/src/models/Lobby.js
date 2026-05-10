@@ -25,7 +25,8 @@ const lobbySchema = new mongoose.Schema(
       maxPlayers: { type: Number, default: 4 },
       hp: { type: Number, default: 3 },
       timer: { type: Number, default: 15 },
-      isPublic: { type: Boolean, default: true }
+      isPublic: { type: Boolean, default: true },
+      categoryChallenge: { type: Boolean, default: false }
     },
     status: { type: String, enum: ["waiting", "playing", "finished"], default: "waiting" }
   },

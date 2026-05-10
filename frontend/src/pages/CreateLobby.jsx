@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Lock, Plus, Unlock } from "lucide-react";
+import { ArrowRight, Lock, Plus, Tag, Unlock } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { useSocket } from "../hooks/useSocket.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -12,7 +12,7 @@ export default function CreateLobby() {
   const { guestName, guestId, enterGuest, user } = useAuth();
   const { showToast } = useToast();
   const [guestInput, setGuestInput] = useState(guestName);
-  const [form, setForm] = useState({ name: "Classic Room", maxPlayers: 4, hp: 3, timer: 15, isPublic: true });
+  const [form, setForm] = useState({ name: "Classic Room", maxPlayers: 4, hp: 3, timer: 15, isPublic: true, categoryChallenge: false });
   const [loading, setLoading] = useState(false);
 
   const submit = (event) => {
@@ -75,10 +75,21 @@ export default function CreateLobby() {
           />
         </div>
 
-        <label className="mt-5 flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-sm font-black text-slate-200">
-          <input type="checkbox" checked={form.isPublic} onChange={(event) => setForm({ ...form, isPublic: event.target.checked })} />
-          Lobby public
-        </label>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-sm font-black text-slate-200 cursor-pointer hover:border-slate-500 transition">
+            <input type="checkbox" checked={form.isPublic} onChange={(event) => setForm({ ...form, isPublic: event.target.checked })} />
+            <Unlock size={15} className="text-cyan-400 shrink-0" />
+            Lobby public
+          </label>
+          <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-sm font-black text-slate-200 cursor-pointer hover:border-slate-500 transition">
+            <input type="checkbox" checked={form.categoryChallenge} onChange={(event) => setForm({ ...form, categoryChallenge: event.target.checked })} />
+            <Tag size={15} className="text-violet-400 shrink-0" />
+            <span>
+              Challenge kategori
+              <span className="ml-2 font-normal text-slate-400 text-xs">tiap kata harus sesuai kategori acak</span>
+            </span>
+          </label>
+        </div>
 
           <Button className="mt-6 w-full sm:w-auto" variant="accent" disabled={loading} type="submit">
             <Plus size={18} /> {loading ? "Membuat..." : "Create Lobby"}

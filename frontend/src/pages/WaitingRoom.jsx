@@ -109,10 +109,11 @@ export default function WaitingRoom() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Setting label="Max Player" value={lobby.settings.maxPlayers} />
             <Setting label="HP" value={lobby.settings.hp} />
             <Setting label="Timer" value={`${lobby.settings.timer}s`} />
+            <Setting label="Kategori" value={lobby.settings.categoryChallenge ? "Aktif" : "Off"} tone={lobby.settings.categoryChallenge ? "violet" : "slate"} />
           </div>
         </div>
 
@@ -200,10 +201,15 @@ export default function WaitingRoom() {
   );
 }
 
-const Setting = ({ label, value }) => (
+const SETTING_TONES = {
+  violet: "text-violet-300",
+  slate: "text-slate-500"
+};
+
+const Setting = ({ label, value, tone }) => (
   <div className="flex min-h-[96px] flex-col items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-center">
     <div className="text-xs font-black uppercase text-slate-500">{label}</div>
-    <div className="mt-2 text-2xl font-black text-white">{value}</div>
+    <div className={`mt-2 text-2xl font-black ${tone ? (SETTING_TONES[tone] || "text-white") : "text-white"}`}>{value}</div>
   </div>
 );
 
