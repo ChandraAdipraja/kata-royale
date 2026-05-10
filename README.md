@@ -88,6 +88,24 @@ npm run dev:frontend
 
 Frontend tersedia di `http://localhost:5173`.
 
+## Deploy OAuth
+
+Untuk production, backend harus punya env berikut:
+
+```env
+CLIENT_URL=https://kata-royale.vercel.app
+API_URL=https://kata-royale.onrender.com
+```
+
+`CLIENT_URL` dipakai backend untuk redirect browser setelah OAuth berhasil atau gagal. Kalau nilainya kosong atau masih `http://localhost:5173`, login OAuth akan selesai lalu kembali ke localhost.
+
+`API_URL` dipakai Passport sebagai callback URL OAuth. Daftarkan callback ini juga di provider OAuth:
+
+```text
+https://kata-royale.onrender.com/api/auth/google/callback
+https://kata-royale.onrender.com/api/auth/discord/callback
+```
+
 ## Fitur
 
 - Register, login, logout, JWT auth, protected profile.

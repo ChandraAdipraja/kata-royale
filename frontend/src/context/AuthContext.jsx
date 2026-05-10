@@ -41,6 +41,16 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
+  const loginWithToken = useCallback(async (nextToken) => {
+    localStorage.setItem("sambungkata_token", nextToken);
+    setToken(nextToken);
+    setGuestName("");
+
+    const { data } = await api.get("/auth/me");
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   const register = async (payload) => {
     const { data } = await api.post("/auth/register", payload);
     localStorage.setItem("sambungkata_token", data.token);
@@ -79,6 +89,7 @@ export const AuthProvider = ({ children }) => {
       guestId,
       loading,
       login,
+      loginWithToken,
       register,
       logout,
       enterGuest,
@@ -86,7 +97,7 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: Boolean(user),
       displayName: user?.username || guestName || "Guest"
     }),
-    [user, token, guestName, guestId, loading, updateUser]
+    [user, token, guestName, guestId, loading, loginWithToken, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

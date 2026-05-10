@@ -4,6 +4,7 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./config/db.js";
+import passport from "./config/passport.js";
 import authRoutes from "./routes/authRoutes.js";
 import lobbyRoutes from "./routes/lobbyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -45,6 +46,7 @@ app.set("io", io);
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 app.use(express.json());
+app.use(passport.initialize());
 
 app.get("/", (_req, res) => {
   res.json({
