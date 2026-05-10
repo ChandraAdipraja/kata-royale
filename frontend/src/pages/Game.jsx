@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, Heart, Send, Tag, Timer, WifiOff } from "lucide-react";
+import { Heart, Loader2, Send, ShieldCheck, Tag, Timer, WifiOff } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -109,12 +109,16 @@ export default function Game() {
   const submit = (event) => {
     event.preventDefault();
     if (!word.trim()) return showToast("Kata tidak boleh kosong", "warning");
+    if (game?.isValidating) return showToast("Tunggu, kata masih dicek", "warning");
+
     socket.emit("game:submit_word", { roomCode, word }, (res) => {
       if (!res?.ok) showToast(res?.message || "Kata ditolak", "error");
     });
   };
 
   const typeWord = (value) => {
+    if (game?.isValidating) return;
+
     setWord(value);
     socket.emit("game:typing", { roomCode, text: value });
   };
@@ -137,8 +141,25 @@ export default function Game() {
       : `Mulai dengan ${game.currentLetter.toUpperCase()}`
     : "Menunggu giliran pemain lain...";
 
+  const validationTitle = game.currentCategory ? "AI sedang cek kategori" : "KBBI sedang cek kata";
+  const validationDescription = game.currentCategory
+    ? `Memastikan jawaban cocok dengan kategori ${categoryLabel}.`
+    : "Memastikan kata terdaftar dan sesuai huruf awal.";
+  const validationWord = game.validatingWord || (isMyTurn ? word : remotePreview.replace(/[\s_]/g, ""));
+
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-5 px-4 py-5">
+      {game.isValidating && (
+        <ValidationModal
+          categoryLabel={categoryLabel}
+          currentLetter={game.currentLetter}
+          description={validationDescription}
+          playerName={activePlayer?.username || game.currentTurnUsername}
+          title={validationTitle}
+          word={validationWord}
+        />
+      )}
+
       <section className="panel rounded-2xl px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -182,7 +203,9 @@ export default function Game() {
       </section>
 
       <section className="panel rounded-2xl p-6 text-center">
-        <p className="text-sm font-black uppercase tracking-widest text-slate-400">{isMyTurn ? "Giliran kamu" : `Giliran ${activePlayer?.username || game.currentTurnUsername}`}</p>
+        <p className="text-sm font-black uppercase tracking-widest text-slate-400">
+          {game.isValidating ? "Validasi jawaban" : isMyTurn ? "Giliran kamu" : `Giliran ${activePlayer?.username || game.currentTurnUsername}`}
+        </p>
 
         <div className="relative mx-auto mt-6 flex h-52 w-52 items-center justify-center">
           <div className={`absolute inset-0 rounded-full border-8 ${game.secondsLeft <= 5 ? "border-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.3)]" : "border-yellow-400/80 shadow-[0_0_30px_rgba(250,204,21,0.18)]"}`} />
@@ -207,6 +230,13 @@ export default function Game() {
           </div>
         )}
 
+        {game.isValidating && (
+          <div className="mx-auto mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-yellow-300/30 bg-yellow-300/10 px-4 py-2 text-sm font-black text-yellow-100">
+            <Loader2 size={16} className="shrink-0 animate-spin" />
+            <span className="truncate">{validationTitle}</span>
+          </div>
+        )}
+
         <div className={`text-center justify-center mx-auto flex max-w-xl items-center gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 ${categoryLabel ? "mt-4" : "mt-8"}`}>
           <div className="text-center items-center min-w-0 w-full">
             <div className="text-center mt-1 break-words text-3xl font-black tracking-wide text-cyan-100">{remotePreview || localPreview}</div>
@@ -216,17 +246,58 @@ export default function Game() {
         <form onSubmit={submit} className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row">
           <input
             className="game-input min-h-14 flex-1 px-5 text-lg font-bold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!isMyTurn}
+            disabled={!isMyTurn || game.isValidating}
             placeholder={inputPlaceholder}
             value={word}
             onChange={(event) => typeWord(event.target.value)}
           />
-          <Button disabled={!isMyTurn} type="submit"><Send size={18} /> Submit</Button>
+          <Button disabled={!isMyTurn || game.isValidating} type="submit">
+            {game.isValidating ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+            {game.isValidating ? "Mengecek" : "Submit"}
+          </Button>
         </form>
       </section>
     </main>
   );
 }
+
+const ValidationModal = ({ categoryLabel, currentLetter, description, playerName, title, word }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/78 px-4 backdrop-blur-sm" role="status" aria-live="polite">
+    <div className="w-full max-w-md rounded-2xl border border-yellow-300/30 bg-slate-950/95 p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-yellow-300/35 bg-yellow-300/10 text-yellow-200">
+        <Loader2 size={34} className="animate-spin" />
+      </div>
+      <h2 className="mt-5 text-2xl font-black text-white">{title}</h2>
+      <p className="mt-2 text-sm font-semibold text-slate-300">{description}</p>
+
+      <div className="mt-5 grid grid-cols-2 gap-3 text-left">
+        <div className="rounded-xl border border-slate-700 bg-slate-900/80 p-3">
+          <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Pemain</div>
+          <div className="mt-1 truncate font-black text-white">{playerName || "Player"}</div>
+        </div>
+        <div className="rounded-xl border border-slate-700 bg-slate-900/80 p-3">
+          <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Awalan</div>
+          <div className="mt-1 font-black uppercase text-yellow-200">{currentLetter}</div>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-3">
+        <div className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide text-cyan-200">
+          <ShieldCheck size={14} />
+          Jawaban
+        </div>
+        <div className="mt-1 break-words text-2xl font-black uppercase text-white">{word?.trim() || "..."}</div>
+      </div>
+
+      {categoryLabel && (
+        <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/15 px-4 py-2">
+          <Tag size={14} className="shrink-0 text-violet-300" />
+          <span className="truncate text-sm font-black capitalize text-violet-100">{categoryLabel}</span>
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 const Badge = ({ children, tone }) => {
   const tones = {

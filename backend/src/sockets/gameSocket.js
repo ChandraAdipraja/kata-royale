@@ -57,6 +57,7 @@ const statePayload = (game) => ({
   currentTurnUsername: game.players[game.turnIndex]?.username,
   secondsLeft: game.secondsLeft,
   isValidating: Boolean(game.isValidating),
+  validatingWord: game.validatingWord || "",
   timer: game.settings.timer,
   maxHp: game.settings.hp,
   players: game.players,
@@ -370,6 +371,7 @@ export const registerGameSocket = (io) => {
         wordEvents: [],
         status: "playing",
         isValidating: false,
+        validatingWord: "",
         winner: null,
         interval: null
       };
@@ -418,6 +420,7 @@ export const registerGameSocket = (io) => {
 
       const normalized = String(word || "").trim().toLowerCase();
       game.isValidating = true;
+      game.validatingWord = normalized;
       emitGameState(io, game);
 
       try {
@@ -464,6 +467,7 @@ export const registerGameSocket = (io) => {
         callback?.({ ok: true, state: statePayload(game) });
       } finally {
         game.isValidating = false;
+        game.validatingWord = "";
         emitGameState(io, game);
       }
     });
