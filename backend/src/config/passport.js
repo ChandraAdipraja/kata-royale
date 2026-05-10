@@ -7,6 +7,8 @@ import User from "../models/User.js";
 
 const normalizeUrl = (url) => url.replace(/\/+$/, "");
 const API_URL = normalizeUrl(process.env.API_URL || "http://localhost:5000");
+const hasGoogleOAuth = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+const hasDiscordOAuth = Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
 
 const makeUniqueUsername = async (baseName) => {
   const fallbackName = `player-${crypto.randomBytes(3).toString("hex")}`;
@@ -45,50 +47,60 @@ const findOrCreateOAuthUser = async ({ email, displayName }) => {
   });
 };
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${API_URL}/api/auth/google/callback`
-    },
-    async (_accessToken, _refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value;
-        const user = await findOrCreateOAuthUser({
-          email,
-          displayName: profile.displayName
-        });
+if (hasGoogleOAuth) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: `${API_URL}/api/auth/google/callback`
+      },
+      async (_accessToken, _refreshToken, profile, done) => {
+        try {
+          const email = profile.emails?.[0]?.value;
+          const user = await findOrCreateOAuthUser({
+            email,
+            displayName: profile.displayName
+          });
 
-        done(null, user);
-      } catch (error) {
-        done(error, null);
+          done(null, user);
+        } catch (error) {
+          done(error, null);
+        }
       }
-    }
-  )
-);
+    )
+  );
+}
 
-passport.use(
-  new DiscordStrategy(
-    {
-      clientID: process.env.DISCORD_CLIENT_ID,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      callbackURL: `${API_URL}/api/auth/discord/callback`,
-      scope: ["identify", "email"]
-    },
-    async (_accessToken, _refreshToken, profile, done) => {
-      try {
-        const user = await findOrCreateOAuthUser({
-          email: profile.email,
-          displayName: profile.username || profile.global_name
-        });
+if (hasDiscordOAuth) {
+  passport.use(
+    new DiscordStrategy(
+      {
+        clientID: process.env.DISCORD_CLIENT_ID,
+        clientSecret: process.env.DISCORD_CLIENT_SECRET,
+        callbackURL: `${API_URL}/api/auth/discord/callback`,
+        scope: ["identify", "email"]
+      },
+      async (_accessToken, _refreshToken, profile, done) => {
+        try {
+          const user = await findOrCreateOAuthUser({
+            email: profile.email,
+            displayName: profile.username || profile.global_name
+          });
 
-        done(null, user);
-      } catch (error) {
-        done(error, null);
+          done(null, user);
+        } catch (error) {
+          done(error, null);
+        }
       }
-    }
-  )
-);
+    )
+  );
+}
+
+export const isOAuthConfigured = (provider) => {
+  if (provider === "google") return hasGoogleOAuth;
+  if (provider === "discord") return hasDiscordOAuth;
+  return false;
+};
 
 export default passport;

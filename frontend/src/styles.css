@@ -100,6 +100,40 @@ select.game-input optgroup {
   display: none;
 }
 
+.luxury-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(250, 204, 21, 0.46) rgba(15, 23, 42, 0.7);
+}
+
+.luxury-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.luxury-scroll::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.72));
+  box-shadow:
+    inset 0 0 0 1px rgba(148, 163, 184, 0.14),
+    inset 0 8px 18px rgba(2, 6, 23, 0.26);
+}
+
+.luxury-scroll::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 2px solid rgba(15, 23, 42, 0.92);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(250, 204, 21, 0.9), rgba(245, 158, 11, 0.62));
+  box-shadow:
+    0 0 14px rgba(250, 204, 21, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.luxury-scroll::-webkit-scrollbar-thumb:hover {
+  background:
+    linear-gradient(180deg, rgba(254, 240, 138, 0.95), rgba(250, 204, 21, 0.74));
+}
+
 .shake {
   animation: shake 0.38s ease-in-out;
 }
