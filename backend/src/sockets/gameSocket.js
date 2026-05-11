@@ -460,6 +460,44 @@ export const registerGameSocket = (io) => {
       await emitLobby(io, lobby.roomCode);
     });
 
+    socket.on("lobby:update_settings", async ({ roomCode, settings = {} } = {}, callback) => {
+      try {
+        const lobby = await Lobby.findOne({ roomCode: roomCode?.toUpperCase(), status: "waiting" });
+        if (!lobby) return callback?.({ ok: false, message: "Lobby tidak tersedia" });
+
+        const host = lobby.players.find((player) => player.socketId === socket.id && player.isHost);
+        if (!host) return callback?.({ ok: false, message: "Hanya host yang bisa edit room" });
+
+        const maxPlayers = Number(settings.maxPlayers) || lobby.settings.maxPlayers;
+        const hp = Number(settings.hp) || lobby.settings.hp;
+        const timer = Number(settings.timer) || lobby.settings.timer;
+        const categoryChallenge = Boolean(settings.categoryChallenge);
+
+        if (maxPlayers < lobby.players.length) {
+          return callback?.({ ok: false, message: "Max player tidak boleh lebih kecil dari jumlah pemain saat ini" });
+        }
+
+        if (maxPlayers < 2 || maxPlayers > 8) return callback?.({ ok: false, message: "Max player harus 2-8" });
+        if (hp < 1 || hp > 3) return callback?.({ ok: false, message: "HP harus 1-3" });
+        if (![5, 10, 15, 20].includes(timer)) return callback?.({ ok: false, message: "Timer tidak valid" });
+
+        lobby.settings.maxPlayers = maxPlayers;
+        lobby.settings.hp = hp;
+        lobby.settings.timer = timer;
+        lobby.settings.categoryChallenge = categoryChallenge;
+        lobby.players.forEach((player) => {
+          player.hp = hp;
+          if (!player.isHost) player.ready = false;
+        });
+
+        await lobby.save();
+        callback?.({ ok: true, lobby: publicLobby(lobby) });
+        await emitLobby(io, lobby.roomCode);
+      } catch (_error) {
+        callback?.({ ok: false, message: "Gagal update setting room" });
+      }
+    });
+
     socket.on("lobby:start", async ({ roomCode } = {}, callback) => {
       const lobby = await Lobby.findOne({ roomCode: roomCode?.toUpperCase() });
       if (!lobby) return callback?.({ ok: false, message: "Lobby tidak ditemukan" });

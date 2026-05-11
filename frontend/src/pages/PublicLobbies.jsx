@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, LogIn, RefreshCcw, UsersRound, X } from "lucide-react";
+import { ArrowRight, LogIn, RefreshCcw, Tag, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -119,7 +119,7 @@ export default function PublicLobbies() {
                     </span>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-black text-slate-300">
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs font-black text-slate-300 sm:grid-cols-4">
                     <div className="rounded-lg border border-slate-700 bg-slate-900/70 px-2 py-2">
                       <div className="text-[10px] uppercase text-slate-500">Max</div>
                       {lobby.maxPlayers}
@@ -131,6 +131,12 @@ export default function PublicLobbies() {
                     <div className="rounded-lg border border-slate-700 bg-slate-900/70 px-2 py-2">
                       <div className="text-[10px] uppercase text-slate-500">HP</div>
                       {lobby.hp || "-"}
+                    </div>
+                    <div className={`rounded-lg border px-2 py-2 ${lobby.categoryChallenge ? "border-violet-400/30 bg-violet-500/15 text-violet-100" : "border-slate-700 bg-slate-900/70 text-slate-400"}`}>
+                      <div className="text-[10px] uppercase text-slate-500">Kategori</div>
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <Tag size={11} /> {lobby.categoryChallenge ? "On" : "Off"}
+                      </span>
                     </div>
                   </div>
 

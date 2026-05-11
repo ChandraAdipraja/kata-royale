@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, Copy, Crown, LogOut, Play, Timer, UsersRound, X } from "lucide-react";
+import { CheckCircle2, Copy, Crown, LogOut, Pencil, Play, Tag, Timer, UsersRound, X } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -16,6 +16,9 @@ export default function WaitingRoom() {
   const [lobby, setLobby] = useState(state?.lobby || null);
   const [joining, setJoining] = useState(!state?.lobby);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showSettingsEditor, setShowSettingsEditor] = useState(false);
+  const [settingsForm, setSettingsForm] = useState({ maxPlayers: 4, hp: 3, timer: 15, categoryChallenge: false });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
@@ -72,6 +75,27 @@ export default function WaitingRoom() {
     });
   };
 
+  const openSettingsEditor = () => {
+    setSettingsForm({
+      maxPlayers: lobby.settings.maxPlayers,
+      hp: lobby.settings.hp,
+      timer: lobby.settings.timer,
+      categoryChallenge: Boolean(lobby.settings.categoryChallenge)
+    });
+    setShowSettingsEditor(true);
+  };
+
+  const saveSettings = () => {
+    setSavingSettings(true);
+    socket.emit("lobby:update_settings", { roomCode, settings: settingsForm }, (res) => {
+      setSavingSettings(false);
+      if (!res?.ok) return showToast(res?.message || "Gagal update setting room", "error");
+      setLobby(res.lobby);
+      setShowSettingsEditor(false);
+      showToast("Setting room diperbarui", "success");
+    });
+  };
+
   const leaveRoom = () => {
     setShowLeaveConfirm(false);
     if (me?.isHost) {
@@ -118,6 +142,15 @@ export default function WaitingRoom() {
             <Setting label="HP" value={lobby.settings.hp} />
             <Setting label="Timer" value={`${lobby.settings.timer}s`} />
             <Setting label="Kategori" value={lobby.settings.categoryChallenge ? "Aktif" : "Off"} tone={lobby.settings.categoryChallenge ? "violet" : "slate"} />
+            {me?.isHost && (
+              <button
+                className="col-span-2 flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-sm font-black text-yellow-100 transition hover:border-yellow-300 hover:bg-yellow-400/15 sm:col-span-4"
+                onClick={openSettingsEditor}
+                type="button"
+              >
+                <Pencil size={16} /> Edit Room
+              </button>
+            )}
           </div>
         </div>
 
@@ -201,6 +234,17 @@ export default function WaitingRoom() {
           </div>
         </div>
       )}
+
+      {showSettingsEditor && (
+        <SettingsEditorModal
+          currentPlayerCount={lobby.players.length}
+          form={settingsForm}
+          onCancel={() => setShowSettingsEditor(false)}
+          onChange={setSettingsForm}
+          onSave={saveSettings}
+          saving={savingSettings}
+        />
+      )}
     </main>
   );
 }
@@ -222,4 +266,86 @@ const Check = ({ ok, text }) => (
     <span className={`h-2.5 w-2.5 rounded-full ${ok ? "bg-emerald-400" : "bg-amber-400"}`} />
     {text}
   </div>
+);
+
+const SettingsEditorModal = ({ currentPlayerCount, form, onCancel, onChange, onSave, saving }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+    <div className="panel w-full max-w-xl rounded-2xl p-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-black text-white">Edit Room</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-400">Pemain yang sudah ready akan diminta ready ulang.</p>
+        </div>
+        <button className="text-slate-400 transition hover:text-white" onClick={onCancel} type="button" aria-label="Tutup modal">
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <SelectField
+          label="Max Player"
+          value={form.maxPlayers}
+          onChange={(value) => onChange({ ...form, maxPlayers: value })}
+          options={[2, 3, 4, 5, 6, 7, 8].filter((value) => value >= currentPlayerCount)}
+        />
+        <SelectField
+          label="HP"
+          value={form.hp}
+          onChange={(value) => onChange({ ...form, hp: value })}
+          options={[1, 2, 3]}
+        />
+        <SelectField
+          label="Timer"
+          value={form.timer}
+          onChange={(value) => onChange({ ...form, timer: value })}
+          options={[5, 10, 15, 20]}
+          suffix="s"
+        />
+      </div>
+
+      <button
+        className={`mt-5 flex w-full items-center gap-3 rounded-xl border p-4 text-left transition ${form.categoryChallenge ? "border-violet-400/35 bg-violet-500/15" : "border-slate-700 bg-slate-900/70 hover:border-slate-500"}`}
+        onClick={() => onChange({ ...form, categoryChallenge: !form.categoryChallenge })}
+        type="button"
+      >
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${form.categoryChallenge ? "bg-violet-400/20 text-violet-200" : "bg-white/10 text-slate-300"}`}>
+          <Tag size={17} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-black text-white">Challenge kategori</span>
+          <span className="mt-1 block text-sm font-semibold text-slate-400">Setiap kata harus sesuai kategori acak.</span>
+        </span>
+        <span className={`rounded-lg px-3 py-1 text-xs font-black uppercase ${form.categoryChallenge ? "bg-violet-400/20 text-violet-100" : "bg-white/10 text-slate-400"}`}>
+          {form.categoryChallenge ? "On" : "Off"}
+        </span>
+      </button>
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <Button variant="secondary" className="w-full" onClick={onCancel} type="button" disabled={saving}>
+          Batal
+        </Button>
+        <Button variant="accent" className="w-full" onClick={onSave} type="button" disabled={saving}>
+          {saving ? "Menyimpan..." : "Simpan"}
+        </Button>
+      </div>
+    </div>
+  </div>
+);
+
+const SelectField = ({ label, value, onChange, options, suffix = "" }) => (
+  <label className="block">
+    <span className="text-sm font-black text-slate-300">{label}</span>
+    <div className="relative mt-2">
+      <select
+        className="game-input w-full appearance-none px-4 py-3 pr-10"
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>{option}{suffix}</option>
+        ))}
+      </select>
+      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">▾</span>
+    </div>
+  </label>
 );
