@@ -58,6 +58,7 @@ const statePayload = (game) => ({
   secondsLeft: game.secondsLeft,
   isValidating: Boolean(game.isValidating),
   validatingWord: game.validatingWord || "",
+  totalTurns: game.totalTurns || game.wordsUsed?.length || 0,
   timer: game.settings.timer,
   maxHp: game.settings.hp,
   players: game.players,
@@ -263,6 +264,7 @@ const penalizeCurrentPlayer = async (io, game, reason) => {
   const player = game.players[game.turnIndex];
   if (!player) return;
 
+  game.totalTurns = (game.totalTurns || 0) + 1;
   player.hp = Math.max(player.hp - 1, 0);
   if (player.hp === 0) {
     player.alive = false;
@@ -444,6 +446,7 @@ export const registerGameSocket = (io) => {
         secondsLeft: lobby.settings.timer,
         wordsUsed: [],
         wordEvents: [],
+        totalTurns: 0,
         status: "playing",
         isValidating: false,
         validatingWord: "",
@@ -548,6 +551,7 @@ export const registerGameSocket = (io) => {
 
         game.wordEvents.push({ word: normalized, userId: current.userId, isValid: true });
         game.wordsUsed.push(normalized);
+        game.totalTurns = (game.totalTurns || 0) + 1;
         game.currentLetter = normalized.at(-1);
         if (game.settings.categoryChallenge) game.currentCategory = randomCategory();
         game.secondsLeft = game.settings.timer;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Heart, Loader2, LogOut, Send, ShieldCheck, Tag, Timer, WifiOff, X } from "lucide-react";
+import { BookOpenText, CheckCircle2, Clock3, Heart, History, Loader2, LogOut, Send, ShieldCheck, Tag, Timer, WifiOff, X, XCircle } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -24,8 +24,13 @@ export default function Game() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const leavingRef = useRef(false);
 
-  const pushActivity = (message, type = "info") => {
-    setActivity((items) => [{ id: `${Date.now()}_${Math.random()}`, message, type }, ...items].slice(0, 12));
+  const pushActivity = (entry) => {
+    const time = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+    setActivity((items) => [{ id: `${Date.now()}_${Math.random()}`, time, ...entry }, ...items]);
   };
 
   useEffect(() => {
@@ -46,28 +51,52 @@ export default function Game() {
     const onTurn = (nextState) => {
       setWord("");
       setRemotePreview("");
-      pushActivity(`Giliran ${nextState.currentTurnUsername}`);
+      pushActivity({
+        playerName: nextState.currentTurnUsername,
+        status: "Giliran baru",
+        detail: `Mulai dengan huruf ${nextState.currentLetter?.toUpperCase() || "-"}`,
+        type: "info"
+      });
     };
     const onValid = (payload) => {
       showToast(`${payload.word.toUpperCase()} valid`, "success");
-      pushActivity(`${payload.username} menjawab ${payload.word.toUpperCase()}`, "success");
-      pushActivity("Kata valid", "success");
+      pushActivity({
+        playerName: payload.username,
+        status: "Menjawab",
+        detail: payload.word.toUpperCase(),
+        type: "success"
+      });
       setWord("");
       setRemotePreview("");
     };
     const onInvalid = (payload) => {
       showToast(payload.reason || "Jawaban salah", payload.reason === "Timeout" ? "warning" : "error");
-      pushActivity(`${payload.username}: ${payload.reason}, HP -1`, payload.reason === "Timeout" ? "warning" : "error");
+      pushActivity({
+        playerName: payload.username,
+        status: payload.reason === "Timeout" ? "Tidak menjawab" : "Jawaban ditolak",
+        detail: `${payload.reason || "Jawaban salah"} - HP -1`,
+        type: payload.reason === "Timeout" ? "warning" : "error"
+      });
       setShakingId(payload.playerId);
       window.setTimeout(() => setShakingId(""), 420);
     };
     const onEliminated = (payload) => {
       showToast(`${payload.username} tereliminasi`, "warning");
-      pushActivity(`${payload.username} tereliminasi`, "warning");
+      pushActivity({
+        playerName: payload.username,
+        status: "Tereliminasi",
+        detail: "HP habis",
+        type: "warning"
+      });
     };
     const onPlayerLeft = (payload) => {
       showToast(`${payload.username} keluar dari match`, "warning");
-      pushActivity(`${payload.username} keluar dari match`, "warning");
+      pushActivity({
+        playerName: payload.username,
+        status: "Keluar match",
+        detail: "Pemain meninggalkan room",
+        type: "warning"
+      });
     };
     const onFinished = (payload) => {
       sessionStorage.setItem(`result:${roomCode}`, JSON.stringify(payload));
@@ -297,6 +326,11 @@ export default function Game() {
           </Button>
         </form>
       </section>
+
+      <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+        <TimelineCard items={activity} />
+        <UsedWordsCard words={game.wordsUsed || []} />
+      </section>
     </main>
   );
 }
@@ -361,6 +395,106 @@ const LeaveMatchModal = ({ onCancel, onConfirm }) => (
       </div>
     </div>
   </div>
+);
+
+const TimelineCard = ({ items }) => (
+  <section className="panel rounded-2xl p-5">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <History size={18} className="text-yellow-300" />
+        <h2 className="text-lg font-black text-white">Timeline</h2>
+      </div>
+      <span className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-black text-slate-300">{items.length}</span>
+    </div>
+
+    <div className="custom-scrollbar mt-4 h-72 overflow-y-auto pr-2">
+      {items.length === 0 ? (
+        <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-950/35 px-4 text-center text-sm font-semibold text-slate-400">
+          Aktivitas jawaban akan muncul di sini.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <TimelineItem key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+);
+
+const TimelineItem = ({ item }) => {
+  const typeStyle = {
+    success: {
+      icon: CheckCircle2,
+      ring: "border-emerald-400/30 bg-emerald-400/10 text-emerald-200",
+      badge: "bg-emerald-400/10 text-emerald-200"
+    },
+    warning: {
+      icon: Clock3,
+      ring: "border-amber-300/30 bg-amber-300/10 text-amber-200",
+      badge: "bg-amber-300/10 text-amber-200"
+    },
+    error: {
+      icon: XCircle,
+      ring: "border-rose-400/30 bg-rose-400/10 text-rose-200",
+      badge: "bg-rose-400/10 text-rose-200"
+    },
+    info: {
+      icon: Timer,
+      ring: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200",
+      badge: "bg-cyan-400/10 text-cyan-200"
+    }
+  };
+  const style = typeStyle[item.type] || typeStyle.info;
+  const Icon = style.icon;
+
+  return (
+    <article className="rounded-xl border border-slate-700 bg-slate-950/55 p-3">
+      <div className="flex items-start gap-3">
+        <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${style.ring}`}>
+          <Icon size={17} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate font-black text-white">{item.playerName || "Player"}</span>
+            <span className={`rounded-md px-2 py-0.5 text-[11px] font-black uppercase ${style.badge}`}>{item.status}</span>
+          </div>
+          <p className="mt-1 break-words text-sm font-semibold text-slate-300">{item.detail}</p>
+        </div>
+        <time className="shrink-0 text-[11px] font-bold text-slate-500">{item.time}</time>
+      </div>
+    </article>
+  );
+};
+
+const UsedWordsCard = ({ words }) => (
+  <section className="panel rounded-2xl p-5">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <BookOpenText size={18} className="text-cyan-300" />
+        <h2 className="text-lg font-black text-white">Kata Dipakai</h2>
+      </div>
+      <span className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-black text-slate-300">{words.length}</span>
+    </div>
+
+    <div className="custom-scrollbar mt-4 h-72 overflow-y-auto pr-2">
+      {words.length === 0 ? (
+        <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-950/35 px-4 text-center text-sm font-semibold text-slate-400">
+          Belum ada kata valid yang digunakan.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
+          {words.map((usedWord, index) => (
+            <div key={`${usedWord}_${index}`} className="min-w-0 rounded-xl border border-cyan-400/15 bg-cyan-400/10 px-3 py-2">
+              <div className="text-[10px] font-black uppercase text-cyan-300/70">#{index + 1}</div>
+              <div className="mt-0.5 truncate text-sm font-black uppercase text-cyan-50" title={usedWord}>{usedWord}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
 );
 
 const Badge = ({ children, tone }) => {

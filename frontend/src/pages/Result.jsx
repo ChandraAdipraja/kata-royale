@@ -22,6 +22,11 @@ export default function Result() {
     );
   }
 
+  const validWords = result.wordsUsed || [];
+  const longestWord = validWords.reduce((longest, current) => (
+    current.length > longest.length ? current : longest
+  ), "");
+  const totalTurns = result.totalTurns ?? validWords.length;
   const standings = [...result.players].sort((a, b) => b.hp - a.hp);
 
   return (
@@ -41,12 +46,12 @@ export default function Result() {
         </section>
 
         <section className="mt-6 grid gap-4 sm:grid-cols-3">
-          <StatCard label="Total Kata Valid" value={result.wordsUsed.length} tone="mint" />
-          <StatCard label="Total Turn" value={result.wordsUsed.length} tone="cyan" />
-          <StatCard label="Durasi Match" value="-" tone="purple" />
+          <StatCard label="Kata Valid" value={validWords.length} tone="mint" />
+          <StatCard label="Kata Terpanjang" value={longestWord ? longestWord.toUpperCase() : "-"} tone="amber" />
+          <StatCard label="Total Turn" value={totalTurns} tone="cyan" />
         </section>
 
-        <section className="mt-6 grid gap-6">
+        <section className="mt-6">
           <div className="panel rounded-2xl p-5">
             <h2 className="flex items-center justify-center gap-2 text-xl font-black text-white"><Trophy size={20} className="text-yellow-400" /> Final Standings</h2>
             <div className="mt-4 space-y-3">
