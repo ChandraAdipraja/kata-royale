@@ -66,7 +66,7 @@ const validateWithGemini = async (word, category) => {
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       contents: [{ parts: [{ text: buildPrompt(word, category) }] }],
-      generationConfig: { maxOutputTokens: 50, temperature: 0, thinkingConfig: { thinkingBudget: 0 } }
+      generationConfig: { maxOutputTokens: 200, temperature: 0 }
     },
     { timeout: geminiTimeoutMs() }
   );
@@ -156,7 +156,9 @@ export const validateCategory = async (word, category) => {
   } catch (error) {
     const status = error.response?.status;
     const errMsg = error.response?.data?.error?.message || error.message;
+    const errDetails = error.response?.data?.error?.details;
     console.error(`[Gemini] Error validasi "${w}" kategori "${c}" (status ${status || "no-response"}): ${errMsg}`);
+    if (errDetails) console.error(`[Gemini] Error details:`, JSON.stringify(errDetails));
   }
 
   try {
