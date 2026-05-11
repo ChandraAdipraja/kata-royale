@@ -10,6 +10,13 @@ const games = new Map();
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
 
 const randomLetter = () => alphabet[Math.floor(Math.random() * alphabet.length)];
+const randomLetterExcept = (currentLetter = "") => {
+  let nextLetter = randomLetter();
+  while (nextLetter === currentLetter) {
+    nextLetter = randomLetter();
+  }
+  return nextLetter;
+};
 const makeRoomCode = () => crypto.randomBytes(3).toString("hex").toUpperCase();
 const publicLobby = (lobby) => lobby.toObject?.() || lobby;
 const playerKey = (player) => player.userId?.toString() || player.guestId || player.socketId;
@@ -270,6 +277,8 @@ const penalizeCurrentPlayer = async (io, game, reason) => {
     player.alive = false;
     io.to(game.roomCode).emit("game:player_eliminated", { playerId: playerKey(player), username: player.username });
   }
+  game.currentLetter = randomLetterExcept(game.currentLetter);
+  if (game.settings.categoryChallenge) game.currentCategory = randomCategory();
 
   await syncLobbyPlayers(game);
   io.to(game.roomCode).emit("game:word_invalid", { playerId: playerKey(player), username: player.username, reason });
