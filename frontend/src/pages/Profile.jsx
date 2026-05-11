@@ -6,27 +6,46 @@ import { Button } from "../components/Button.jsx";
 import { StatCard } from "../components/StatCard.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../services/api.js";
+import { useToast } from "../context/ToastContext.jsx";
 
 export default function Profile() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user: authUser, updateUser } = useAuth();
+  const { showToast } = useToast();
   const [user, setUser] = useState(authUser);
   const [savingAvatar, setSavingAvatar] = useState(false);
+  const [savingName, setSavingName] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [editMode, setEditMode] = useState("all");
+  const [usernameInput, setUsernameInput] = useState(authUser?.username || "");
 
-  const openAvatarEditor = () => setEditingProfile(true);
+  const openProfileEditor = (mode = "all") => {
+    setUsernameInput(user?.username || authUser?.username || "");
+    setEditMode(mode);
+    setEditingProfile(true);
+  };
   const closeAvatarEditor = () => setEditingProfile(false);
-  const toggleAvatarEditor = () => setEditingProfile((isOpen) => !isOpen);
+  const toggleProfileEditor = () => {
+    if (editingProfile) {
+      setEditingProfile(false);
+      return;
+    }
+
+    openProfileEditor("all");
+  };
 
   useEffect(() => {
     if (!authUser) return;
-    api.get("/users/profile").then(({ data }) => setUser(data.user));
+    api.get("/users/profile").then(({ data }) => {
+      setUser(data.user);
+      setUsernameInput(data.user.username);
+    });
   }, [authUser]);
 
   useEffect(() => {
     if (!location.state?.openAvatarEditor) return;
-    openAvatarEditor();
+    openProfileEditor("avatar");
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.pathname, location.state, navigate]);
 
@@ -64,6 +83,25 @@ export default function Profile() {
     }
   };
 
+  const saveUsername = async (event) => {
+    event.preventDefault();
+    const nextUsername = usernameInput.trim();
+    if (nextUsername === user.username || savingName) return;
+
+    setSavingName(true);
+    try {
+      const { data } = await api.patch("/users/profile", { username: nextUsername });
+      setUser(data.user);
+      updateUser(data.user);
+      setUsernameInput(data.user.username);
+      showToast("Nama profile diperbarui", "success");
+    } catch (error) {
+      showToast(error.response?.data?.message || "Gagal update nama", "error");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
@@ -74,7 +112,7 @@ export default function Profile() {
         <button
           aria-label="Edit Profile"
           className="rounded-xl bg-slate-800 p-3 text-slate-400 transition hover:bg-slate-700 hover:text-white"
-          onClick={toggleAvatarEditor}
+          onClick={toggleProfileEditor}
           type="button"
         >
           <Settings size={24} />
@@ -92,14 +130,19 @@ export default function Profile() {
             <button
               aria-label="Edit avatar"
               className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-950 bg-yellow-400 text-slate-950 shadow-lg transition hover:bg-yellow-300"
-              onClick={toggleAvatarEditor}
+              onClick={() => openProfileEditor("avatar")}
               type="button"
             >
               <Pencil size={16} />
             </button>
           </div>
           <div>
-            <h1 className="text-4xl font-black text-white">{user.username}</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="break-words text-4xl font-black text-white">{user.username}</h1>
+              <Button variant="ghost" className="!min-h-9 !px-3 !py-1.5" onClick={() => openProfileEditor("name")} type="button">
+                <Pencil size={15} /> Edit
+              </Button>
+            </div>
             <p className="mt-1 text-slate-400">{user.email}</p>
           </div>
         </div>
@@ -118,7 +161,9 @@ export default function Profile() {
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-black uppercase text-yellow-300">Edit Profile</p>
-                <h2 className="mt-1 text-2xl font-black text-white">Pilih Avatar</h2>
+                <h2 className="mt-1 text-2xl font-black text-white">
+                  {editMode === "name" ? "Edit Nama" : editMode === "avatar" ? "Pilih Avatar" : "Nama dan Avatar"}
+                </h2>
               </div>
               <button
                 aria-label="Tutup edit profile"
@@ -129,18 +174,38 @@ export default function Profile() {
                 <X size={22} />
               </button>
             </div>
-            <AvatarSelector disabled={savingAvatar} onChange={changeAvatar} value={user.avatar || "Avatar1.png"} />
-            {savingAvatar && <p className="mt-3 text-sm font-semibold text-slate-400">Menyimpan avatar...</p>}
+
+            {(editMode === "name" || editMode === "all") && (
+              <form onSubmit={saveUsername} className={editMode === "all" ? "mb-6" : ""}>
+                <label className="block">
+                  <span className="text-sm font-black text-slate-300">Nama pemain</span>
+                  <input
+                    className="game-input mt-2 px-4 py-3 font-bold"
+                    maxLength={24}
+                    minLength={3}
+                    onChange={(event) => setUsernameInput(event.target.value)}
+                    placeholder="Username"
+                    value={usernameInput}
+                  />
+                </label>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs font-semibold text-slate-500">3-24 karakter, huruf, angka, spasi, dan underscore.</p>
+                  <Button disabled={savingName || usernameInput.trim() === user.username} type="submit">
+                    {savingName ? "Menyimpan..." : "Simpan Nama"}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {(editMode === "avatar" || editMode === "all") && (
+              <>
+                <AvatarSelector disabled={savingAvatar} onChange={changeAvatar} value={user.avatar || "Avatar1.png"} />
+                {savingAvatar && <p className="mt-3 text-sm font-semibold text-slate-400">Menyimpan avatar...</p>}
+              </>
+            )}
           </section>
         </div>
       )}
-
-      <section className="panel mt-6 rounded-2xl p-6">
-        <h2 className="text-xl font-black text-white">Recent Matches</h2>
-        <p className="mt-3 rounded-xl border border-dashed border-slate-600 bg-slate-900/70 p-4 text-sm font-semibold text-slate-400">
-          Backend saat ini belum menyediakan endpoint recent matches. Statistik utama sudah aktif dan tersimpan setelah match selesai.
-        </p>
-      </section>
     </main>
   );
 }

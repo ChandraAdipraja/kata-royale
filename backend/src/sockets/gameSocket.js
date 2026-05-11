@@ -196,6 +196,42 @@ export const syncUserAvatarInRooms = async (io, userId, avatar) => {
   });
 };
 
+export const syncUserNameInRooms = async (io, userId, username) => {
+  const userIdString = userId?.toString();
+  if (!io || !userIdString) return;
+
+  const lobbies = await Lobby.find({ "players.userId": userId });
+  await Promise.all(
+    lobbies.map(async (lobby) => {
+      let changed = false;
+
+      lobby.players.forEach((player) => {
+        if (player.userId?.toString() === userIdString) {
+          player.username = username;
+          changed = true;
+        }
+      });
+
+      if (!changed) return;
+      await lobby.save();
+      io.to(lobby.roomCode).emit("lobby:updated", publicLobby(lobby));
+    })
+  );
+
+  games.forEach((game) => {
+    let changed = false;
+
+    game.players.forEach((player) => {
+      if (player.userId?.toString() === userIdString) {
+        player.username = username;
+        changed = true;
+      }
+    });
+
+    if (changed) emitGameState(io, game);
+  });
+};
+
 const updateStats = async (game) => {
   const validWordCounts = new Map();
   for (const entry of game.wordEvents) {
