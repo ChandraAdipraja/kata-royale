@@ -23,6 +23,7 @@ export default function Game() {
   const [disconnected, setDisconnected] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const leavingRef = useRef(false);
+  const wordInputRef = useRef(null);
 
   const pushActivity = (entry) => {
     const time = new Date().toLocaleTimeString("id-ID", {
@@ -137,6 +138,14 @@ export default function Game() {
   const me = useMemo(() => game?.players?.find((player) => player.socketId === socket?.id), [game, socket?.id]);
   const activePlayer = useMemo(() => game?.players?.find((player) => playerId(player) === game?.currentTurnPlayerId), [game]);
   const isMyTurn = Boolean(me && game?.currentTurnPlayerId === playerId(me));
+
+  useEffect(() => {
+    if (!isMyTurn || game?.isValidating || showLeaveConfirm) return;
+    const focusTimer = window.setTimeout(() => {
+      wordInputRef.current?.focus();
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [isMyTurn, game?.isValidating, game?.currentTurnPlayerId, showLeaveConfirm]);
 
   const localPreview = useMemo(() => {
     const letters = word.trim().toUpperCase().split("");
@@ -314,6 +323,7 @@ export default function Game() {
 
         <form onSubmit={submit} className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row">
           <input
+            ref={wordInputRef}
             className="game-input min-h-14 flex-1 px-5 text-lg font-bold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!isMyTurn || game.isValidating}
             placeholder={inputPlaceholder}
