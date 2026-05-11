@@ -241,13 +241,19 @@ export default function Game() {
         />
       )}
 
-      <section className="panel rounded-2xl px-4 py-3">
+      <section className="panel mx-auto w-full max-w-5xl rounded-2xl px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="rounded-xl bg-slate-950 px-3 py-2 font-mono text-sm font-black uppercase text-slate-200">Room {roomCode}</span>
             <StatusPill tone="gold" icon={Sparkles}>{game.status}</StatusPill>
             {categoryLabel && <StatusPill tone="violet" icon={Tag}>{categoryLabel}</StatusPill>}
             {disconnected && <StatusPill tone="amber" icon={WifiOff}>Reconnecting</StatusPill>}
+            <StatusPill tone="slate" icon={Crown}>
+              {game.players.filter((player) => player.alive && player.hp > 0).length} Pemain
+            </StatusPill>
+            <StatusPill tone={categoryLabel ? "violet" : "gold"} icon={categoryLabel ? Tag : Sparkles}>
+              {categoryLabel ? "Kategori" : "Classic"}
+            </StatusPill>
           </div>
           <Button variant="ghost" className="!min-h-9 !px-3 !py-1.5" onClick={() => setShowLeaveConfirm(true)} type="button">
             <LogOut size={16} /> Keluar Match
@@ -334,11 +340,6 @@ export default function Game() {
               </div>
             </form>
 
-            <div className="mt-5 grid w-full gap-3 sm:grid-cols-3">
-              <MiniStat label="Pemain Hidup" value={game.players.filter((player) => player.alive && player.hp > 0).length} />
-              <MiniStat label="Kata Valid" value={game.wordsUsed?.length || 0} tone="cyan" />
-              <MiniStat label="Mode" value={categoryLabel ? "Kategori" : "Classic"} tone={categoryLabel ? "violet" : "gold"} />
-            </div>
           </div>
         </section>
 
@@ -406,22 +407,6 @@ const PlayerCard = ({ game, player, isTurn, isYou, shaking }) => {
         <span className="rounded-lg bg-slate-950/70 px-2 py-1 text-xs font-black text-slate-300">{Math.max(player.hp, 0)} HP</span>
       </div>
     </article>
-  );
-};
-
-const MiniStat = ({ label, value, tone = "slate" }) => {
-  const tones = {
-    slate: "border-slate-700 bg-slate-950/60 text-slate-100",
-    cyan: "border-cyan-400/20 bg-cyan-400/10 text-cyan-100",
-    gold: "border-yellow-400/20 bg-yellow-400/10 text-yellow-100",
-    violet: "border-violet-400/20 bg-violet-400/10 text-violet-100"
-  };
-
-  return (
-    <div className={`rounded-xl border px-4 py-3 text-center ${tones[tone] || tones.slate}`}>
-      <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-lg font-black text-white">{value}</div>
-    </div>
   );
 };
 
