@@ -76,7 +76,11 @@ export default function WaitingRoom() {
     setShowLeaveConfirm(false);
     if (me?.isHost) {
       socket.emit("lobby:close", { roomCode }, (res) => {
-        if (!res?.ok) showToast(res?.message || "Gagal membubarkan", "error");
+        if (!res?.ok) {
+          showToast(res?.message || "Gagal membubarkan", "error");
+          return;
+        }
+        socket?.disconnect();
         navigate("/dashboard");
       });
       return;

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Heart, Loader2, Send, ShieldCheck, Tag, Timer, WifiOff } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Heart, Loader2, LogOut, Send, ShieldCheck, Tag, Timer, WifiOff, X } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -21,6 +21,8 @@ export default function Game() {
   const [activity, setActivity] = useState([]);
   const [shakingId, setShakingId] = useState("");
   const [disconnected, setDisconnected] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const leavingRef = useRef(false);
 
   const pushActivity = (message, type = "info") => {
     setActivity((items) => [{ id: `${Date.now()}_${Math.random()}`, message, type }, ...items].slice(0, 12));
@@ -63,11 +65,16 @@ export default function Game() {
       showToast(`${payload.username} tereliminasi`, "warning");
       pushActivity(`${payload.username} tereliminasi`, "warning");
     };
+    const onPlayerLeft = (payload) => {
+      showToast(`${payload.username} keluar dari match`, "warning");
+      pushActivity(`${payload.username} keluar dari match`, "warning");
+    };
     const onFinished = (payload) => {
       sessionStorage.setItem(`result:${roomCode}`, JSON.stringify(payload));
       navigate(`/result/${roomCode}`, { state: { result: payload } });
     };
     const onDisconnect = () => {
+      if (leavingRef.current) return;
       setDisconnected(true);
       showToast("Socket terputus. Mencoba menyambung ulang...", "warning");
     };
@@ -79,6 +86,7 @@ export default function Game() {
     socket.on("game:word_valid", onValid);
     socket.on("game:word_invalid", onInvalid);
     socket.on("game:player_eliminated", onEliminated);
+    socket.on("game:player_left", onPlayerLeft);
     socket.on("game:finished", onFinished);
     socket.on("disconnect", onDisconnect);
     socket.on("connect", onConnect);
@@ -90,6 +98,7 @@ export default function Game() {
       socket.off("game:word_valid", onValid);
       socket.off("game:word_invalid", onInvalid);
       socket.off("game:player_eliminated", onEliminated);
+      socket.off("game:player_left", onPlayerLeft);
       socket.off("game:finished", onFinished);
       socket.off("disconnect", onDisconnect);
       socket.off("connect", onConnect);
@@ -121,6 +130,28 @@ export default function Game() {
 
     setWord(value);
     socket.emit("game:typing", { roomCode, text: value });
+  };
+
+  const leaveMatch = () => {
+    setShowLeaveConfirm(false);
+    leavingRef.current = true;
+    sessionStorage.removeItem(`game:${roomCode}`);
+
+    if (!socket?.connected) {
+      navigate("/dashboard");
+      return;
+    }
+
+    socket.emit("game:leave", { roomCode }, (res) => {
+      if (!res?.ok) {
+        leavingRef.current = false;
+        showToast(res?.message || "Gagal keluar dari match", "error");
+        return;
+      }
+
+      socket.disconnect();
+      navigate("/dashboard");
+    });
   };
 
   if (!game) {
@@ -160,13 +191,22 @@ export default function Game() {
         />
       )}
 
+      {showLeaveConfirm && (
+        <LeaveMatchModal
+          onCancel={() => setShowLeaveConfirm(false)}
+          onConfirm={leaveMatch}
+        />
+      )}
+
       <section className="panel rounded-2xl px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="rounded-xl bg-white/10 px-3 py-2 font-mono text-sm font-black uppercase text-slate-300">Room {roomCode}</span>
             {disconnected && <span className="inline-flex items-center gap-1 rounded-xl bg-amber-400/10 px-3 py-2 text-sm font-black text-amber-300"><WifiOff size={15} /> Reconnecting</span>}
           </div>
-          <Link to="/dashboard"><Button variant="ghost" className="!min-h-9 !px-3 !py-1.5">Dashboard</Button></Link>
+          <Button variant="ghost" className="!min-h-9 !px-3 !py-1.5" onClick={() => setShowLeaveConfirm(true)} type="button">
+            <LogOut size={16} /> Keluar Match
+          </Button>
         </div>
       </section>
 
@@ -295,6 +335,30 @@ const ValidationModal = ({ categoryLabel, currentLetter, description, playerName
           <span className="truncate text-sm font-black capitalize text-violet-100">{categoryLabel}</span>
         </div>
       )}
+    </div>
+  </div>
+);
+
+const LeaveMatchModal = ({ onCancel, onConfirm }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/78 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="leave-match-title">
+    <div className="panel w-full max-w-md rounded-2xl p-6">
+      <div className="flex items-center justify-between gap-4">
+        <h2 id="leave-match-title" className="text-xl font-black text-white">Keluar dari match?</h2>
+        <button className="text-slate-400 transition hover:text-white" onClick={onCancel} type="button" aria-label="Tutup modal">
+          <X size={20} />
+        </button>
+      </div>
+      <p className="mt-3 text-sm font-semibold text-slate-400">
+        Kamu akan keluar dari room ini, dianggap gugur dari match, dan koneksi socket untuk match akan diputus.
+      </p>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <Button variant="secondary" className="w-full" onClick={onCancel} type="button">
+          Batal
+        </Button>
+        <Button variant="danger" className="w-full" onClick={onConfirm} type="button">
+          Keluar
+        </Button>
+      </div>
     </div>
   </div>
 );

@@ -1,9 +1,11 @@
 node_modules/
 dist/
+.vite-build-check/
 logs/
 services/kbbi-api/kv-data/
 services/kbbi-api/.wrangler/
 .env
 backend/.env
 frontend/.env
+frontend/.env.local
 npm-debug.log*

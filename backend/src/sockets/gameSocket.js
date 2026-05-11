@@ -90,6 +90,32 @@ const syncLobbyPlayers = async (game) => {
   );
 };
 
+const leaveWaitingRoomsForSocket = async (io, socket, skipRoomCode = "") => {
+  const lobbies = await Lobby.find({ "players.socketId": socket.id, status: "waiting" });
+  await Promise.all(
+    lobbies.map(async (lobby) => {
+      if (skipRoomCode && lobby.roomCode === skipRoomCode) return;
+
+      const leaving = lobby.players.find((player) => player.socketId === socket.id);
+      lobby.players = lobby.players.filter((player) => player.socketId !== socket.id);
+      socket.leave(lobby.roomCode);
+
+      if (lobby.players.length === 0) {
+        await Lobby.deleteOne({ roomCode: lobby.roomCode });
+        return;
+      }
+
+      if (leaving?.isHost && lobby.players[0]) {
+        lobby.players[0].isHost = true;
+        lobby.players[0].ready = true;
+      }
+
+      await lobby.save();
+      await emitLobby(io, lobby.roomCode);
+    })
+  );
+};
+
 export const syncUserAvatarInRooms = async (io, userId, avatar) => {
   const userIdString = userId?.toString();
   if (!io || !userIdString) return;
@@ -189,6 +215,50 @@ const moveTurn = (io, game) => {
   return null;
 };
 
+const removePlayerFromGame = async (io, game, socket, reason = "left") => {
+  if (!game || game.status !== "playing") return false;
+
+  const player = game.players.find((item) => item.socketId === socket.id);
+  if (!player) return false;
+  socket.leave(game.roomCode);
+  if (!player.alive) return true;
+
+  const currentPlayer = game.players[game.turnIndex];
+  const wasCurrentTurn = playerKey(currentPlayer) === playerKey(player);
+  player.hp = 0;
+  player.alive = false;
+
+  io.to(game.roomCode).emit("game:player_left", {
+    playerId: playerKey(player),
+    username: player.username,
+    reason
+  });
+
+  await syncLobbyPlayers(game);
+
+  if (alivePlayers(game).length <= 1) {
+    await finishGame(io, game);
+    return true;
+  }
+
+  if (wasCurrentTurn) {
+    await moveTurn(io, game);
+  } else {
+    emitGameState(io, game);
+  }
+
+  return true;
+};
+
+const leaveActiveRoomsForSocket = async (io, socket, skipRoomCode = "") => {
+  await leaveWaitingRoomsForSocket(io, socket, skipRoomCode);
+
+  for (const game of games.values()) {
+    if (skipRoomCode && game.roomCode === skipRoomCode) continue;
+    await removePlayerFromGame(io, game, socket);
+  }
+};
+
 const penalizeCurrentPlayer = async (io, game, reason) => {
   const player = game.players[game.turnIndex];
   if (!player) return;
@@ -228,6 +298,8 @@ export const registerGameSocket = (io) => {
   io.on("connection", (socket) => {
     socket.on("lobby:create", async (payload = {}, callback) => {
       try {
+        await leaveActiveRoomsForSocket(io, socket);
+
         const settings = {
           maxPlayers: Number(payload.maxPlayers) || 4,
           hp: Number(payload.hp) || 3,
@@ -268,6 +340,7 @@ export const registerGameSocket = (io) => {
 
           if (!existingPlayer) return callback?.({ ok: false, message: "Game sudah berjalan" });
 
+          await leaveActiveRoomsForSocket(io, socket, code);
           existingPlayer.socketId = socket.id;
           await lobby.save();
           const game = games.get(code);
@@ -278,7 +351,6 @@ export const registerGameSocket = (io) => {
           socket.join(code);
           return callback?.({ ok: true, lobby: publicLobby(lobby), gameState: game ? statePayload(game) : null });
         }
-        if (lobby.players.length >= lobby.settings.maxPlayers) return callback?.({ ok: false, message: "Lobby penuh" });
 
         const alreadyJoined = lobby.players.some(
           (player) =>
@@ -286,6 +358,9 @@ export const registerGameSocket = (io) => {
             (socket.user && player.userId?.toString() === socket.user._id.toString()) ||
             (!socket.user && (guestId || socket.handshake.auth?.guestId) && player.guestId === (guestId || socket.handshake.auth.guestId))
         );
+        if (!alreadyJoined && lobby.players.length >= lobby.settings.maxPlayers) return callback?.({ ok: false, message: "Lobby penuh" });
+
+        await leaveActiveRoomsForSocket(io, socket, code);
         if (!alreadyJoined) {
           lobby.players.push(makePlayer(socket, socket.user, lobby.settings.hp, false, guestName, guestId || socket.handshake.auth?.guestId));
         } else {
@@ -392,8 +467,29 @@ export const registerGameSocket = (io) => {
       if (!host) return callback?.({ ok: false, message: "Hanya host yang bisa membubarkan" });
 
       io.to(code).emit("lobby:closed", { roomCode: code });
+      io.in(code).socketsLeave(code);
       await Lobby.deleteOne({ roomCode: code });
       callback?.({ ok: true });
+    });
+
+    socket.on("game:leave", async ({ roomCode } = {}, callback) => {
+      try {
+        const code = roomCode?.toUpperCase();
+        if (!code) return callback?.({ ok: false, message: "Room code tidak valid" });
+
+        const game = games.get(code);
+        if (!game || game.status !== "playing") {
+          socket.leave(code);
+          return callback?.({ ok: true });
+        }
+
+        const left = await removePlayerFromGame(io, game, socket);
+        if (!left) return callback?.({ ok: false, message: "Kamu tidak ada di match ini" });
+
+        callback?.({ ok: true });
+      } catch (_error) {
+        callback?.({ ok: false, message: "Gagal keluar dari match" });
+      }
     });
 
     socket.on("game:typing", ({ roomCode, text } = {}) => {
@@ -473,23 +569,7 @@ export const registerGameSocket = (io) => {
     });
 
     socket.on("disconnect", async () => {
-      const lobbies = await Lobby.find({ "players.socketId": socket.id, status: "waiting" });
-      await Promise.all(
-        lobbies.map(async (lobby) => {
-          const leaving = lobby.players.find((player) => player.socketId === socket.id);
-          lobby.players = lobby.players.filter((player) => player.socketId !== socket.id);
-          if (lobby.players.length === 0) {
-            await Lobby.deleteOne({ roomCode: lobby.roomCode });
-            return;
-          }
-          if (leaving?.isHost && lobby.players[0]) {
-            lobby.players[0].isHost = true;
-            lobby.players[0].ready = true;
-          }
-          await lobby.save();
-          await emitLobby(io, lobby.roomCode);
-        })
-      );
+      await leaveActiveRoomsForSocket(io, socket);
     });
   });
 };
