@@ -94,6 +94,7 @@ export default function Profile() {
       setUser(data.user);
       updateUser(data.user);
       setUsernameInput(data.user.username);
+      closeAvatarEditor();
       showToast("Nama profile diperbarui", "success");
     } catch (error) {
       showToast(error.response?.data?.message || "Gagal update nama", "error");
