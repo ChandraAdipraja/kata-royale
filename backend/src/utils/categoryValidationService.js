@@ -8,6 +8,7 @@ export const randomCategory = () => CATEGORIES[Math.floor(Math.random() * CATEGO
 
 const normalize = (str = "") => str.trim().toLowerCase();
 const geminiTimeoutMs = () => Number(process.env.GEMINI_TIMEOUT_MS || process.env.CATEGORY_AI_TIMEOUT_MS) || 8000;
+const geminiModel = () => process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const cloudflareTimeoutMs = () => Number(process.env.CLOUDFLARE_AI_TIMEOUT_MS || process.env.CATEGORY_AI_TIMEOUT_MS) || 20000;
 const isConfigured = (value = "") => Boolean(value && value.length >= 20 && !/^your_|^isi_|change_this/i.test(value));
 
@@ -58,10 +59,11 @@ const validateWithGemini = async (word, category) => {
     return null;
   }
 
-  console.log(`[Gemini] Memvalidasi kata "${word}" untuk kategori "${category}"`);
+  const model = geminiModel();
+  console.log(`[Gemini] Memvalidasi kata "${word}" untuk kategori "${category}" (model: ${model})`);
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       contents: [{ parts: [{ text: buildPrompt(word, category) }] }],
       generationConfig: { maxOutputTokens: 10, temperature: 0 }
