@@ -27,7 +27,9 @@ export default function Result() {
     current.length > longest.length ? current : longest
   ), "");
   const totalTurns = result.totalTurns ?? validWords.length;
-  const standings = [...result.players].sort((a, b) => b.hp - a.hp);
+  const standings = result.standings?.length
+    ? result.standings
+    : [...result.players].sort((a, b) => b.hp - a.hp);
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8">
@@ -58,7 +60,7 @@ export default function Result() {
               {standings.map((player, index) => (
                 <div key={player.userId || player.guestId || player.socketId} className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/70 p-3">
                   <div>
-                    <div className="font-black text-white">#{index + 1} {player.username}</div>
+                    <div className="font-black text-white">#{player.rank || index + 1} {player.username}</div>
                     <div className="text-xs font-bold uppercase text-slate-500">{player.isGuest ? "Guest" : "User"}</div>
                   </div>
                   <span className="rounded-lg bg-white/10 px-3 py-1 text-sm font-black text-rose-300">{player.hp} HP</span>

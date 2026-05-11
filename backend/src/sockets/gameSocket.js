@@ -22,6 +22,41 @@ const publicLobby = (lobby) => lobby.toObject?.() || lobby;
 const playerKey = (player) => player.userId?.toString() || player.guestId || player.socketId;
 const alivePlayers = (game) => game.players.filter((player) => player.alive && player.hp > 0);
 
+const addElimination = (game, player) => {
+  const key = playerKey(player);
+  if (!key) return;
+  game.eliminationOrder ||= [];
+  if (!game.eliminationOrder.includes(key)) game.eliminationOrder.push(key);
+};
+
+const finalStandings = (game) => {
+  const playersByKey = new Map(game.players.map((player) => [playerKey(player), player]));
+  const orderedKeys = [];
+  const winnerKey = playerKey(game.winner);
+
+  if (winnerKey) orderedKeys.push(winnerKey);
+
+  for (const player of game.players.filter((item) => item.alive && playerKey(item) !== winnerKey)) {
+    orderedKeys.push(playerKey(player));
+  }
+
+  for (const key of [...(game.eliminationOrder || [])].reverse()) {
+    if (!orderedKeys.includes(key)) orderedKeys.push(key);
+  }
+
+  for (const player of [...game.players].sort((a, b) => b.hp - a.hp)) {
+    const key = playerKey(player);
+    if (!orderedKeys.includes(key)) orderedKeys.push(key);
+  }
+
+  return orderedKeys
+    .map((key, index) => {
+      const player = playersByKey.get(key);
+      return player ? { ...player, rank: index + 1 } : null;
+    })
+    .filter(Boolean);
+};
+
 const resolveSocketUser = async (socket) => {
   const token = socket.handshake.auth?.token;
   if (!token) return null;
@@ -70,6 +105,7 @@ const statePayload = (game) => ({
   maxHp: game.settings.hp,
   players: game.players,
   wordsUsed: game.wordsUsed,
+  standings: game.status === "finished" ? finalStandings(game) : [],
   status: game.status,
   winner: game.winner || null
 });
@@ -235,6 +271,7 @@ const removePlayerFromGame = async (io, game, socket, reason = "left") => {
   const wasCurrentTurn = playerKey(currentPlayer) === playerKey(player);
   player.hp = 0;
   player.alive = false;
+  addElimination(game, player);
 
   io.to(game.roomCode).emit("game:player_left", {
     playerId: playerKey(player),
@@ -275,6 +312,7 @@ const penalizeCurrentPlayer = async (io, game, reason) => {
   player.hp = Math.max(player.hp - 1, 0);
   if (player.hp === 0) {
     player.alive = false;
+    addElimination(game, player);
     io.to(game.roomCode).emit("game:player_eliminated", { playerId: playerKey(player), username: player.username });
   }
   game.currentLetter = randomLetterExcept(game.currentLetter);
@@ -455,6 +493,7 @@ export const registerGameSocket = (io) => {
         secondsLeft: lobby.settings.timer,
         wordsUsed: [],
         wordEvents: [],
+        eliminationOrder: [],
         totalTurns: 0,
         status: "playing",
         isValidating: false,
