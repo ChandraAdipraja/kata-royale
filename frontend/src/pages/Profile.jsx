@@ -55,7 +55,7 @@ export default function Profile() {
         <Link to="/dashboard" className="mb-6 inline-flex rounded-xl bg-slate-800 p-3 text-white transition hover:bg-slate-700">
           <ArrowRight className="rotate-180" size={24} />
         </Link>
-        <section className="panel rounded-2xl p-8 text-center">
+        <section className="game-surface rounded-2xl p-8 text-center">
           <h1 className="text-3xl font-black text-white">Profile permanen butuh akun</h1>
           <p className="mt-3 text-slate-400">Guest tetap bisa bermain, tetapi statistik match, winrate, dan kata valid hanya disimpan untuk user login.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -119,8 +119,8 @@ export default function Profile() {
           <Settings size={24} />
         </button>
       </div>
-      <section className="panel rounded-2xl p-6">
-        <p className="text-sm font-black uppercase text-yellow-300">Player Profile</p>
+      <section className="game-surface rounded-2xl p-6">
+        <p className="section-kicker">Player Profile</p>
         <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="relative h-24 w-24 shrink-0">
             <img
@@ -158,7 +158,7 @@ export default function Profile() {
 
       {editingProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-8 backdrop-blur-sm">
-          <section className="panel max-h-full w-full max-w-3xl overflow-y-auto rounded-2xl p-6">
+          <section className="game-surface max-h-full w-full max-w-3xl overflow-y-auto rounded-2xl p-6">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-black uppercase text-yellow-300">Edit Profile</p>

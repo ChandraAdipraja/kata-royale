@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, LogIn, RefreshCcw, Tag, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowRight, Clock3, Filter, LogIn, RefreshCcw, Search, Tag, UsersRound, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useSocket } from "../hooks/useSocket.js";
@@ -18,6 +18,8 @@ export default function PublicLobbies() {
   const [lobbies, setLobbies] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
   const [showJoinCode, setShowJoinCode] = useState(false);
+  const [modeFilter, setModeFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchLobbies = async () => {
     setLoadingList(true);
@@ -74,47 +76,91 @@ export default function PublicLobbies() {
     });
   };
 
+  const filteredLobbies = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    return lobbies.filter((lobby) => {
+      const matchesMode =
+        modeFilter === "all" ||
+        (modeFilter === "category" && lobby.categoryChallenge) ||
+        (modeFilter === "classic" && !lobby.categoryChallenge) ||
+        (modeFilter === "open" && lobby.playerCount < lobby.maxPlayers);
+
+      const matchesSearch =
+        !query ||
+        lobby.name?.toLowerCase().includes(query) ||
+        lobby.hostName?.toLowerCase().includes(query) ||
+        lobby.roomCode?.toLowerCase().includes(query);
+
+      return matchesMode && matchesSearch;
+    });
+  }, [lobbies, modeFilter, searchTerm]);
+
   return (
     <main className="flex min-h-screen items-start justify-center px-4 py-8">
       <section className="w-full max-w-6xl">
         <Link to="/dashboard" className="inline-flex rounded-xl bg-slate-800 p-3 text-white transition hover:bg-slate-700">
           <ArrowRight className="rotate-180" size={20} />
         </Link>
-        <div className="panel mt-4 rounded-2xl p-4 sm:p-6">
+        <div className="game-surface mt-4 rounded-2xl p-4 sm:p-6">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h1 className="text-3xl font-black text-white">Lobby</h1>
-              <p className="mt-2 text-sm text-slate-400">Pilih lobby publik atau masuk dengan kode untuk lobby privat.</p>
+              <p className="section-kicker"><UsersRound size={15} /> Matchmaking</p>
+              <h1 className="mt-2 text-3xl font-black text-white">Lobby Publik</h1>
+              <p className="mt-2 text-sm font-semibold text-slate-400">Pilih room yang masih kosong atau masuk dengan kode untuk lobby privat.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="secondary" onClick={fetchLobbies}><RefreshCcw size={16} /> Refresh</Button>
-              <Button variant="ghost" onClick={() => setShowJoinCode(true)}>Join with Code</Button>
-              <Link to="/lobby/create"><Button>Create Lobby</Button></Link>
+              <Button variant="ghost" onClick={() => setShowJoinCode(true)}>Join Kode</Button>
+              <Link to="/lobby/create"><Button>Buat Lobby</Button></Link>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              className="game-input min-h-12 pl-11 pr-4"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Cari lobby, host, atau kode..."
+              value={searchTerm}
+            />
+          </label>
+          <div className="flex flex-wrap gap-2 rounded-xl border border-slate-700 bg-slate-950/35 p-1">
+            <FilterButton active={modeFilter === "all"} onClick={() => setModeFilter("all")}>Semua</FilterButton>
+            <FilterButton active={modeFilter === "open"} onClick={() => setModeFilter("open")}>Tersedia</FilterButton>
+            <FilterButton active={modeFilter === "classic"} onClick={() => setModeFilter("classic")}>Classic</FilterButton>
+            <FilterButton active={modeFilter === "category"} onClick={() => setModeFilter("category")}>Kategori</FilterButton>
           </div>
         </div>
 
         <div className="mt-6">
           {loadingList && (
-            <div className="panel rounded-2xl p-6 text-sm font-semibold text-slate-400">Loading lobby...</div>
+            <div className="game-surface rounded-2xl p-6 text-sm font-semibold text-slate-400">Memuat lobby...</div>
           )}
 
-          {!loadingList && lobbies.length === 0 && (
-            <div className="panel rounded-2xl p-6 text-sm font-semibold text-slate-400">Belum ada lobby publik.</div>
+          {!loadingList && filteredLobbies.length === 0 && (
+            <div className="game-surface rounded-2xl p-8 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/60 text-slate-300">
+                <Filter size={24} />
+              </div>
+              <h2 className="mt-4 text-xl font-black text-white">Lobby belum ketemu</h2>
+              <p className="mt-2 text-sm font-semibold text-slate-400">Coba refresh, ubah filter, atau buat lobby baru.</p>
+            </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {lobbies.map((lobby) => {
+            {filteredLobbies.map((lobby) => {
               const full = lobby.playerCount >= lobby.maxPlayers;
               return (
-                <div key={lobby.roomCode} className="panel rounded-2xl p-5">
+                <div key={lobby.roomCode} className={`game-surface rounded-2xl p-5 transition hover:border-yellow-400/35 ${full ? "opacity-65" : ""}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-xs font-bold uppercase text-slate-500">Lobby</div>
                       <div className="mt-1 text-lg font-black text-white">{lobby.name}</div>
                       <div className="mt-2 text-xs font-bold text-slate-400">Host: {lobby.hostName}</div>
                     </div>
-                    <span className="rounded-xl bg-white/10 px-3 py-1 text-xs font-black text-slate-200">
+                    <span className={`rounded-xl px-3 py-1 text-xs font-black ${full ? "bg-rose-400/10 text-rose-200" : "bg-emerald-400/10 text-emerald-200"}`}>
                       {lobby.playerCount}/{lobby.maxPlayers}
                     </span>
                   </div>
@@ -125,8 +171,8 @@ export default function PublicLobbies() {
                       {lobby.maxPlayers}
                     </div>
                     <div className="rounded-lg border border-slate-700 bg-slate-900/70 px-2 py-2">
-                      <div className="text-[10px] uppercase text-slate-500">Time</div>
-                      {lobby.timer || "-"}
+                      <div className="text-[10px] uppercase text-slate-500">Timer</div>
+                      <span className="inline-flex items-center justify-center gap-1"><Clock3 size={11} /> {lobby.timer || "-"}</span>
                     </div>
                     <div className="rounded-lg border border-slate-700 bg-slate-900/70 px-2 py-2">
                       <div className="text-[10px] uppercase text-slate-500">HP</div>
@@ -152,9 +198,9 @@ export default function PublicLobbies() {
 
       {showJoinCode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
-          <div className="panel w-full max-w-md rounded-2xl p-6">
+          <div className="game-surface w-full max-w-md rounded-2xl p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black text-white">Join with Code</h2>
+              <h2 className="text-xl font-black text-white">Join dengan Kode</h2>
               <button className="text-slate-400 transition hover:text-white" onClick={() => setShowJoinCode(false)} type="button">
                 <X size={20} />
               </button>
@@ -175,7 +221,7 @@ export default function PublicLobbies() {
               </label>
 
               <Button className="w-full" disabled={loading} type="submit">
-                <LogIn size={18} /> {loading ? "Joining..." : "Join Lobby"}
+                <LogIn size={18} /> {loading ? "Bergabung..." : "Join Lobby"}
               </Button>
             </form>
           </div>
@@ -184,3 +230,13 @@ export default function PublicLobbies() {
     </main>
   );
 }
+
+const FilterButton = ({ active, children, onClick }) => (
+  <button
+    className={`min-h-10 rounded-lg px-3 text-xs font-black uppercase transition ${active ? "bg-yellow-400 text-yellow-950" : "text-slate-300 hover:bg-white/10 hover:text-white"}`}
+    onClick={onClick}
+    type="button"
+  >
+    {children}
+  </button>
+);

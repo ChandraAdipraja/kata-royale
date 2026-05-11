@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Crown, Trophy } from "lucide-react";
+import { ArrowRight, Crown, Medal, Trophy } from "lucide-react";
 import { api } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -37,17 +37,38 @@ export default function Leaderboard() {
       >
         <ArrowRight className="rotate-180" size={24} />
       </Link>
-      <section className="panel mt-4 rounded-2xl p-6">
+      <section className="game-surface mt-4 rounded-2xl p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-black uppercase text-yellow-300">
-              Ranking
-            </p>
+            <p className="section-kicker"><Medal size={15} /> Ranking</p>
             <h1 className="mt-2 flex items-center gap-2 text-3xl font-black text-white">
               <Trophy size={30} className="text-yellow-400" /> Leaderboard
             </h1>
           </div>
         </div>
+
+        {!loading && users.length > 0 && (
+          <section className="mt-6 grid gap-3 md:grid-cols-3">
+            {users.slice(0, 3).map((leader, index) => (
+              <article
+                className={`rounded-2xl border p-5 text-center ${
+                  index === 0
+                    ? "border-yellow-300/40 bg-yellow-400/15"
+                    : index === 1
+                      ? "border-slate-300/30 bg-slate-300/10"
+                      : "border-amber-600/35 bg-amber-600/10"
+                }`}
+                key={leader._id}
+              >
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-slate-950/70 text-yellow-300">
+                  <Crown size={26} fill="currentColor" />
+                </div>
+                <div className="mt-3 truncate text-xl font-black text-white">{leader.username}</div>
+                <div className="mt-2 text-sm font-bold text-slate-300">{leader.win || 0} win</div>
+              </article>
+            ))}
+          </section>
+        )}
 
         <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-700 bg-slate-900/70">
           <table className="w-full min-w-[560px] border-collapse text-left text-sm">

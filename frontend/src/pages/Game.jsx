@@ -241,7 +241,7 @@ export default function Game() {
         />
       )}
 
-      <section className="panel mx-auto w-full max-w-5xl rounded-2xl px-4 py-3">
+      <section className="game-surface mx-auto w-full max-w-5xl rounded-2xl px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="rounded-xl bg-slate-950 px-3 py-2 font-mono text-sm font-black uppercase text-slate-200">Room {roomCode}</span>
@@ -275,9 +275,9 @@ export default function Game() {
           ))}
         </section>
 
-        <section className="arena-stage relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/70 p-5 text-center shadow-2xl shadow-slate-950/30 sm:p-7">
+        <section className={`arena-stage tile-grid relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/70 p-5 text-center shadow-2xl shadow-slate-950/30 sm:p-7 ${dangerTime ? "danger-pulse" : ""}`}>
           <div className="mx-auto flex max-w-3xl flex-col items-center">
-            <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+            <p className="section-kicker">
               {game.isValidating ? "Validasi jawaban" : isMyTurn ? "Giliran kamu" : `Giliran ${activePlayer?.username || game.currentTurnUsername}`}
             </p>
 
@@ -318,9 +318,7 @@ export default function Game() {
               <div className="text-xs font-black uppercase tracking-widest text-cyan-300/80">
                 {remotePreview ? "Typing preview" : "Word preview"}
               </div>
-              <div className="mt-3 min-h-[48px] break-words text-3xl font-black tracking-wide text-cyan-50 sm:text-4xl">
-                {previewText}
-              </div>
+              <PreviewTiles text={previewText} />
             </div>
 
             <form onSubmit={submit} className="mt-5 w-full max-w-2xl">
@@ -410,6 +408,20 @@ const PlayerCard = ({ game, player, isTurn, isYou, shaking }) => {
   );
 };
 
+const PreviewTiles = ({ text }) => {
+  const tiles = String(text || "_").split(" ");
+
+  return (
+    <div className="mt-4 flex min-h-[56px] flex-wrap items-center justify-center gap-2">
+      {tiles.map((letter, index) => (
+        <span className="letter-tile text-2xl sm:text-3xl" key={`${letter}_${index}`}>
+          {letter || "_"}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const ValidationModal = ({ categoryLabel, currentLetter, description, playerName, title, word }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/78 px-4 backdrop-blur-sm" role="status" aria-live="polite">
     <div className="w-full max-w-md rounded-2xl border border-yellow-300/30 bg-slate-950/95 p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
@@ -450,7 +462,7 @@ const ValidationModal = ({ categoryLabel, currentLetter, description, playerName
 
 const LeaveMatchModal = ({ onCancel, onConfirm }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/78 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="leave-match-title">
-    <div className="panel w-full max-w-md rounded-2xl p-6">
+    <div className="game-surface w-full max-w-md rounded-2xl p-6">
       <div className="flex items-center justify-between gap-4">
         <h2 id="leave-match-title" className="text-xl font-black text-white">Keluar dari match?</h2>
         <button className="text-slate-400 transition hover:text-white" onClick={onCancel} type="button" aria-label="Tutup modal">
@@ -473,7 +485,7 @@ const LeaveMatchModal = ({ onCancel, onConfirm }) => (
 );
 
 const TimelineCard = ({ items }) => (
-  <section className="panel rounded-2xl p-4">
+  <section className="game-surface rounded-2xl p-4">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         <History size={18} className="text-yellow-300" />
@@ -544,7 +556,7 @@ const TimelineItem = ({ item }) => {
 };
 
 const RecentWordsCard = ({ words, total }) => (
-  <section className="panel rounded-2xl p-4">
+  <section className="game-surface rounded-2xl p-4">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         <BookOpenText size={18} className="text-cyan-300" />

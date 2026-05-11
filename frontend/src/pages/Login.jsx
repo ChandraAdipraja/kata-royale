@@ -47,10 +47,13 @@ export default function Login() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center py-10">
-      <form onSubmit={submit} className="panel w-full max-w-md space-y-6 rounded-2xl p-6">
+    <main className="flex min-h-screen items-center justify-center px-4 py-10">
+      <form onSubmit={submit} className="game-surface w-full max-w-md space-y-6 rounded-2xl p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black text-white">Masuk</h1>
+          <div>
+            <p className="section-kicker">Player account</p>
+            <h1 className="mt-1 text-2xl font-black text-white">Masuk</h1>
+          </div>
           <Link to="/" className="text-slate-400 transition hover:text-white"><X size={24} /></Link>
         </div>
 

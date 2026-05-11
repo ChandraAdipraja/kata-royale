@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, Copy, Crown, LogOut, Pencil, Play, Tag, Timer, UsersRound, X } from "lucide-react";
+import { CheckCircle2, Copy, Crown, LogOut, Pencil, Play, ShieldCheck, Tag, UserPlus, UsersRound, X } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -98,25 +98,29 @@ export default function WaitingRoom() {
 
   const leaveRoom = () => {
     setShowLeaveConfirm(false);
+    const reconnectAfterLeave = () => {
+      socket?.disconnect();
+      socket?.connect();
+      navigate("/dashboard");
+    };
+
     if (me?.isHost) {
       socket.emit("lobby:close", { roomCode }, (res) => {
         if (!res?.ok) {
           showToast(res?.message || "Gagal membubarkan", "error");
           return;
         }
-        socket?.disconnect();
-        navigate("/dashboard");
+        reconnectAfterLeave();
       });
       return;
     }
-    socket?.disconnect();
-    navigate("/dashboard");
+    reconnectAfterLeave();
   };
 
   if (!lobby) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-10">
-        <section className="panel w-full max-w-4xl rounded-2xl p-8 text-center">
+        <section className="game-surface w-full max-w-4xl rounded-2xl p-8 text-center">
           <h1 className="text-2xl font-black text-white">{joining ? "Masuk ke waiting room..." : "Lobby tidak tersedia"}</h1>
           <p className="mt-2 text-slate-400">Pastikan room code benar dan game belum selesai.</p>
         </section>
@@ -126,10 +130,11 @@ export default function WaitingRoom() {
 
   return (
       <main className="flex min-h-screen items-center justify-center px-4 py-8">
-        <section className="panel w-full max-w-6xl rounded-2xl border-t-4 border-t-yellow-400 p-6">
+        <section className="game-surface w-full max-w-6xl rounded-2xl border-t-4 border-t-yellow-400 p-5 sm:p-6">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <h1 className="mt-4 text-3xl font-black text-white">{lobby.name}</h1>
+            <p className="section-kicker"><UsersRound size={15} /> Waiting room</p>
+            <h1 className="mt-3 break-words text-3xl font-black text-white">{lobby.name}</h1>
             <p className="mt-2 flex items-center gap-2 text-sm font-bold text-slate-400"><Crown size={16} className="text-yellow-400" /> Host: {host?.username || "-"}</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="inline-flex rounded-2xl bg-slate-950 px-5 py-3 font-mono text-4xl font-black tracking-widest text-white shadow-inner">{lobby.roomCode}</div>
@@ -156,7 +161,10 @@ export default function WaitingRoom() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.72fr]">
           <section>
-            <h2 className="flex items-center gap-2 text-xl font-black text-white"><UsersRound size={20} /> Player List</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-xl font-black text-white"><UsersRound size={20} /> Player List</h2>
+              <span className="rounded-lg bg-white/10 px-3 py-1 text-xs font-black text-slate-300">{lobby.players.length}/{lobby.settings.maxPlayers}</span>
+            </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {lobby.players.map((player) => (
                 <div key={player.userId || player.guestId || player.socketId} className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 transition hover:border-yellow-400/40">
@@ -181,11 +189,22 @@ export default function WaitingRoom() {
                   </div>
                 </div>
               ))}
+              {Array.from({ length: Math.max(0, lobby.settings.maxPlayers - lobby.players.length) }).map((_, index) => (
+                <div key={`empty_${index}`} className="flex min-h-[82px] items-center gap-3 rounded-xl border border-dashed border-slate-700 bg-slate-950/35 p-4 text-slate-500">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70">
+                    <UserPlus size={18} />
+                  </div>
+                  <div>
+                    <div className="font-black text-slate-400">Slot kosong</div>
+                    <div className="mt-1 text-xs font-bold uppercase text-slate-600">Menunggu pemain</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
 
           <aside className="rounded-2xl border border-slate-700 bg-slate-950/60 p-5">
-            <h2 className="flex items-center gap-2 text-xl font-black text-white"><Timer size={20} /> Start Check</h2>
+            <h2 className="flex items-center gap-2 text-xl font-black text-white"><ShieldCheck size={20} /> Start Check</h2>
             <div className="mt-4 space-y-3 text-sm font-semibold text-slate-400">
               <Check ok={enoughPlayers} text="Minimal 2 pemain" />
               <Check ok={everyoneReady} text="Semua player ready" />
@@ -213,7 +232,7 @@ export default function WaitingRoom() {
 
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
-          <div className="panel w-full max-w-md rounded-2xl p-6">
+          <div className="game-surface w-full max-w-md rounded-2xl p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black text-white">Konfirmasi</h2>
               <button className="text-slate-400 transition hover:text-white" onClick={() => setShowLeaveConfirm(false)} type="button">
@@ -255,7 +274,7 @@ const SETTING_TONES = {
 };
 
 const Setting = ({ label, value, tone }) => (
-  <div className="flex min-h-[96px] flex-col items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-center">
+    <div className="flex min-h-[96px] flex-col items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-center">
     <div className="text-xs font-black uppercase text-slate-500">{label}</div>
     <div className={`mt-2 text-2xl font-black ${tone ? (SETTING_TONES[tone] || "text-white") : "text-white"}`}>{value}</div>
   </div>
@@ -270,7 +289,7 @@ const Check = ({ ok, text }) => (
 
 const SettingsEditorModal = ({ currentPlayerCount, form, onCancel, onChange, onSave, saving }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
-    <div className="panel w-full max-w-xl rounded-2xl p-6">
+    <div className="game-surface w-full max-w-xl rounded-2xl p-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-white">Edit Room</h2>

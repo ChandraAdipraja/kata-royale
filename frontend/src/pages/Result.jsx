@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from "react-router-dom";
-import { Crown, Home, Plus, RotateCcw, Trophy } from "lucide-react";
+import { BookOpenText, Crown, Home, Plus, RotateCcw, Sparkles, Trophy } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { StatCard } from "../components/StatCard.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -37,11 +37,11 @@ export default function Result() {
   return (
     <main className="mx-auto flex min-h-screen max-w-7xl items-center px-4 py-8">
       <div className="w-full">
-        <section className="relative overflow-hidden rounded-2xl border border-yellow-400/25 bg-slate-950/80 p-6 text-center shadow-2xl shadow-slate-950/40">
+        <section className="tile-grid relative overflow-hidden rounded-2xl border border-yellow-400/25 bg-slate-950/80 p-6 text-center shadow-2xl shadow-slate-950/40">
           <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-yellow-300/40 bg-yellow-400/15 text-yellow-300 shadow-[0_0_34px_rgba(250,204,21,0.22)]">
             <Crown size={58} fill="currentColor" />
           </div>
-          <p className="mt-5 text-sm font-black uppercase tracking-widest text-yellow-300">Winner</p>
+          <p className="section-kicker mt-5 justify-center"><Sparkles size={15} /> Winner</p>
           <h1 className="mt-2 break-words text-5xl font-black text-white sm:text-6xl">{winner?.username || "-"}</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm font-semibold text-slate-400">
             {user ? "Statistik akunmu sudah disimpan." : "Login untuk menyimpan statistik permainanmu."}
@@ -60,8 +60,10 @@ export default function Result() {
           <StatCard label="Survivor" value={aliveCount || 1} tone="purple" />
         </section>
 
+        <Podium players={standings.slice(0, 3)} />
+
         <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_0.82fr]">
-          <div className="panel rounded-2xl p-5">
+          <div className="game-surface rounded-2xl p-5">
             <h2 className="flex items-center gap-2 text-xl font-black text-white">
               <Trophy size={22} className="text-yellow-400" />
               Final Standings
@@ -73,8 +75,8 @@ export default function Result() {
             </div>
           </div>
 
-          <div className="panel rounded-2xl p-5">
-            <h2 className="text-xl font-black text-white">Word Recap</h2>
+          <div className="game-surface rounded-2xl p-5">
+            <h2 className="flex items-center gap-2 text-xl font-black text-white"><BookOpenText size={21} className="text-cyan-300" /> Word Recap</h2>
             <div className="luxury-scroll mt-5 flex max-h-[360px] flex-wrap gap-2 overflow-y-auto pr-2">
               {wordsUsed.length === 0 && (
                 <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/50 p-4 text-sm font-semibold text-slate-500">
@@ -93,6 +95,30 @@ export default function Result() {
     </main>
   );
 }
+
+const Podium = ({ players }) => {
+  if (!players.length) return null;
+
+  return (
+    <section className="mt-6 grid gap-3 md:grid-cols-3">
+      {players.map((player, index) => {
+        const tones = [
+          "border-yellow-300/40 bg-yellow-400/15 text-yellow-200",
+          "border-slate-300/30 bg-slate-300/10 text-slate-100",
+          "border-amber-500/35 bg-amber-500/10 text-amber-200"
+        ];
+
+        return (
+          <article className={`game-surface rounded-2xl p-5 text-center ${tones[index] || ""}`} key={player.userId || player.guestId || player.socketId}>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950/70 text-lg font-black">#{index + 1}</div>
+            <div className="mt-3 truncate text-xl font-black text-white">{player.username}</div>
+            <div className="mt-1 text-xs font-bold uppercase text-slate-400">{player.isGuest ? "Guest" : "User"}</div>
+          </article>
+        );
+      })}
+    </section>
+  );
+};
 
 const StandingRow = ({ player, index }) => {
   const rankTone = [

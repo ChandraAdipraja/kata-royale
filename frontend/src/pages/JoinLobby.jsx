@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
+import { ArrowRight, LogIn } from "lucide-react";
 import { Button } from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -38,9 +38,10 @@ export default function JoinLobby() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl items-center px-4 py-8">
-      <form onSubmit={submit} className="panel w-full rounded-2xl p-6">
-        <h1 className="text-3xl font-black text-white">Join Lobby</h1>
-        <p className="mt-2 text-slate-400">Masukkan room code dari host untuk masuk waiting room.</p>
+      <form onSubmit={submit} className="game-surface w-full rounded-2xl p-6">
+        <p className="section-kicker"><ArrowRight size={15} /> Private room</p>
+        <h1 className="mt-2 text-3xl font-black text-white">Join Lobby</h1>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">Masukkan room code dari host untuk masuk waiting room.</p>
 
         {!user && !guestName && (
           <label className="mt-6 block">
@@ -55,7 +56,7 @@ export default function JoinLobby() {
         </label>
 
         <Button className="mt-6 w-full" disabled={loading} type="submit">
-          <LogIn size={18} /> {loading ? "Joining..." : "Join Lobby"}
+          <LogIn size={18} /> {loading ? "Bergabung..." : "Join Lobby"}
         </Button>
       </form>
     </main>
