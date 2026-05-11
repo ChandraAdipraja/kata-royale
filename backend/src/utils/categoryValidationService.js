@@ -9,7 +9,7 @@ export const randomCategory = () => CATEGORIES[Math.floor(Math.random() * CATEGO
 const normalize = (str = "") => str.trim().toLowerCase();
 const geminiTimeoutMs = () => Number(process.env.GEMINI_TIMEOUT_MS || process.env.CATEGORY_AI_TIMEOUT_MS) || 8000;
 const cloudflareTimeoutMs = () => Number(process.env.CLOUDFLARE_AI_TIMEOUT_MS || process.env.CATEGORY_AI_TIMEOUT_MS) || 20000;
-const isConfigured = (value = "") => Boolean(value && !/^your_|^isi_|change_this/i.test(value));
+const isConfigured = (value = "") => Boolean(value && value.length >= 20 && !/^your_|^isi_|change_this/i.test(value));
 
 const dictionaryHas = (word, category) => {
   const words = CATEGORY_DICTIONARY[normalize(category)] || [];
@@ -53,21 +53,32 @@ const parseYesNo = (text = "") => {
 
 const validateWithGemini = async (word, category) => {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!isConfigured(apiKey)) return null;
+  if (!isConfigured(apiKey)) {
+    console.log("[Gemini] API key tidak dikonfigurasi, skip validasi Gemini");
+    return null;
+  }
+
+  console.log(`[Gemini] Memvalidasi kata "${word}" untuk kategori "${category}"`);
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       contents: [{ parts: [{ text: buildPrompt(word, category) }] }],
-      generationConfig: { maxOutputTokens: 5, temperature: 0 }
+      generationConfig: { maxOutputTokens: 10, temperature: 0 }
     },
     { timeout: geminiTimeoutMs() }
   );
 
   const text = (response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
-  const isValid = parseYesNo(text);
-  if (isValid === null) return null;
+  console.log(`[Gemini] Response mentah untuk "${word}" (kategori "${category}"): "${text}"`);
 
+  const isValid = parseYesNo(text);
+  if (isValid === null) {
+    console.warn(`[Gemini] Tidak dapat memparse response untuk "${word}": "${text}"`);
+    return null;
+  }
+
+  console.log(`[Gemini] Hasil validasi "${word}" (kategori "${category}"): ${isValid ? "VALID" : "TIDAK VALID"}`);
   return { isValid, source: "gemini" };
 };
 
@@ -111,6 +122,7 @@ export const validateCategory = async (word, category) => {
   }
 
   if (dictionaryHas(w, c)) {
+    console.log(`[Category] "${w}" (kategori "${c}"): VALID dari dictionary lokal`);
     return {
       isValid: true,
       reason: `Valid dalam kategori ${category}`,
@@ -120,6 +132,7 @@ export const validateCategory = async (word, category) => {
 
   const cached = await checkCache(w, c);
   if (cached) {
+    console.log(`[Category] "${w}" (kategori "${c}"): ${cached.isValid ? "VALID" : "TIDAK VALID"} dari cache`);
     return {
       isValid: cached.isValid,
       reason: cached.isValid ? `Valid dalam kategori ${category}` : `Kata bukan termasuk kategori ${category}`,
@@ -133,8 +146,10 @@ export const validateCategory = async (word, category) => {
       await saveCache(w, c, geminiResult.isValid);
       return aiResultPayload(geminiResult.isValid, category, geminiResult.source);
     }
-  } catch (_error) {
-    // Cloudflare is the fallback when Gemini is unavailable, rate-limited, or times out.
+  } catch (error) {
+    const status = error.response?.status;
+    const errMsg = error.response?.data?.error?.message || error.message;
+    console.error(`[Gemini] Error validasi "${w}" kategori "${c}" (status ${status || "no-response"}): ${errMsg}`);
   }
 
   try {
@@ -143,7 +158,10 @@ export const validateCategory = async (word, category) => {
       await saveCache(w, c, cloudflareResult.isValid);
       return aiResultPayload(cloudflareResult.isValid, category, cloudflareResult.source);
     }
-  } catch (_error) {
+  } catch (error) {
+    const status = error.response?.status;
+    const errMsg = error.response?.data?.errors?.[0]?.message || error.message;
+    console.error(`[Cloudflare AI] Error validasi "${w}" kategori "${c}" (status ${status || "no-response"}): ${errMsg}`);
     return { isValid: false, reason: "Validator kategori tidak tersedia", source: "unavailable" };
   }
 
