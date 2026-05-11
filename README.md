@@ -62,7 +62,7 @@ Project ini dibuat sebagai aplikasi full-stack dengan:
   - lose,
   - winrate,
   - total valid words.
-- Leaderboard berdasarkan winrate, jumlah win, lalu total match.
+- Leaderboard berdasarkan jumlah win.
 - Cache validasi kata di MongoDB.
 - Cache validasi kategori di MongoDB.
 - KBBI service terpisah untuk validasi kata.
@@ -511,9 +511,7 @@ GET /api/users/leaderboard
 
 Sorting:
 
-1. `winrate` descending
-2. `win` descending
-3. `totalMatch` ascending
+1. `win` descending
 
 ## Socket Events
 

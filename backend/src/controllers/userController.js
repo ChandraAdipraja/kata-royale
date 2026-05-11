@@ -34,8 +34,8 @@ export const updateAvatar = async (req, res) => {
 
 export const leaderboard = async (_req, res) => {
   const users = await User.find()
-    .select("username totalMatch win lose winrate totalValidWords avatar")
-    .sort({ winrate: -1, win: -1, totalMatch: 1 })
+    .select("username win totalValidWords avatar")
+    .sort({ win: -1, totalValidWords: -1 })
     .limit(25);
 
   res.json({ users });
