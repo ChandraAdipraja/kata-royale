@@ -4,6 +4,13 @@ import { ArrowRight, Crown, Trophy } from "lucide-react";
 import { api } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
+const sortLeaderboardUsers = (leaderboardUsers) =>
+  [...leaderboardUsers].sort((firstUser, secondUser) => {
+    const winDiff = Number(secondUser.win || 0) - Number(firstUser.win || 0);
+    if (winDiff !== 0) return winDiff;
+    return Number(secondUser.totalValidWords || 0) - Number(firstUser.totalValidWords || 0);
+  });
+
 export default function Leaderboard() {
   const { user: authUser } = useAuth();
   const [user, setUser] = useState(authUser);
@@ -14,7 +21,7 @@ export default function Leaderboard() {
   useEffect(() => {
     api
       .get("/users/leaderboard")
-      .then(({ data }) => setUsers(data.users))
+      .then(({ data }) => setUsers(sortLeaderboardUsers(data.users || [])))
       .finally(() => setLoading(false));
   }, []);
 
@@ -43,14 +50,12 @@ export default function Leaderboard() {
         </div>
 
         <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-700 bg-slate-900/70">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[560px] border-collapse text-left text-sm">
             <thead className="bg-slate-950 text-slate-300">
               <tr>
                 <th className="px-4 py-3">Rank</th>
                 <th className="px-4 py-3">Username</th>
                 <th className="px-4 py-3">Total Win</th>
-                <th className="px-4 py-3">Total Match</th>
-                <th className="px-4 py-3">Winrate</th>
                 <th className="px-4 py-3">Total Valid Words</th>
               </tr>
             </thead>
@@ -59,7 +64,7 @@ export default function Leaderboard() {
                 <tr>
                   <td
                     className="px-4 py-5 text-center font-semibold text-slate-500"
-                    colSpan="6"
+                    colSpan="4"
                   >
                     Loading...
                   </td>
@@ -69,7 +74,7 @@ export default function Leaderboard() {
                 <tr>
                   <td
                     className="px-4 py-5 text-center font-semibold text-slate-500"
-                    colSpan="6"
+                    colSpan="4"
                   >
                     Belum ada data leaderboard.
                   </td>
@@ -90,8 +95,6 @@ export default function Leaderboard() {
                     {user.username}
                   </td>
                   <td className="px-4 py-3">{user.win}</td>
-                  <td className="px-4 py-3">{user.totalMatch}</td>
-                  <td className="px-4 py-3">{user.winrate}%</td>
                   <td className="px-4 py-3">{user.totalValidWords}</td>
                 </tr>
               ))}
