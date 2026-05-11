@@ -60,8 +60,6 @@ export default function Result() {
           <StatCard label="Survivor" value={aliveCount || 1} tone="purple" />
         </section>
 
-        <Podium players={standings.slice(0, 3)} />
-
         <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_0.82fr]">
           <div className="game-surface rounded-2xl p-5">
             <h2 className="flex items-center gap-2 text-xl font-black text-white">
@@ -95,30 +93,6 @@ export default function Result() {
     </main>
   );
 }
-
-const Podium = ({ players }) => {
-  if (!players.length) return null;
-
-  return (
-    <section className="mt-6 grid gap-3 md:grid-cols-3">
-      {players.map((player, index) => {
-        const tones = [
-          "border-yellow-300/40 bg-yellow-400/15 text-yellow-200",
-          "border-slate-300/30 bg-slate-300/10 text-slate-100",
-          "border-amber-500/35 bg-amber-500/10 text-amber-200"
-        ];
-
-        return (
-          <article className={`game-surface rounded-2xl p-5 text-center ${tones[index] || ""}`} key={player.userId || player.guestId || player.socketId}>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950/70 text-lg font-black">#{index + 1}</div>
-            <div className="mt-3 truncate text-xl font-black text-white">{player.username}</div>
-            <div className="mt-1 text-xs font-bold uppercase text-slate-400">{player.isGuest ? "Guest" : "User"}</div>
-          </article>
-        );
-      })}
-    </section>
-  );
-};
 
 const StandingRow = ({ player, index }) => {
   const rankTone = [
