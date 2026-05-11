@@ -66,12 +66,17 @@ const validateWithGemini = async (word, category) => {
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       contents: [{ parts: [{ text: buildPrompt(word, category) }] }],
-      generationConfig: { maxOutputTokens: 10, temperature: 0 }
+      generationConfig: { maxOutputTokens: 50, temperature: 0, thinkingConfig: { thinkingBudget: 0 } }
     },
     { timeout: geminiTimeoutMs() }
   );
 
-  const text = (response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+  const parts = response.data?.candidates?.[0]?.content?.parts || [];
+  const text = parts
+    .filter((part) => !part.thought)
+    .map((part) => part.text || "")
+    .join("")
+    .trim();
   console.log(`[Gemini] Response mentah untuk "${word}" (kategori "${category}"): "${text}"`);
 
   const isValid = parseYesNo(text);
